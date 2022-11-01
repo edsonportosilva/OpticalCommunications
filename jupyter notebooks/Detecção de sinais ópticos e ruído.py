@@ -145,11 +145,11 @@ Namostras = 100000
 σ2_s = 2*q*(Ip + Id)*B  # variância
 μ    = 0                # média
 
-σ     = np.sqrt(σ2_s) 
+σ     = np.sqrt(σ2_s)
 Is    = normal(μ, σ, Namostras)  
 
 # plotas as primeiras 1000 amostras
-plt.plot(Is[0:1000],linewidth = 0.8);
+plt.plot(Is[:1000], linewidth = 0.8);
 plt.xlim(0,1000)
 plt.ylabel('Is')
 plt.xlabel('amostra')
