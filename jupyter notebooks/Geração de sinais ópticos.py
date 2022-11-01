@@ -301,9 +301,7 @@ def mzm(Ai, Vπ, u, Vb):
     :return Ao: amplitude da portadora modulada
     """
     π  = np.pi
-    Ao = Ai*np.cos(0.5/Vπ*(u+Vb)*π)
-    
-    return Ao
+    return Ai*np.cos(0.5/Vπ*(u+Vb)*π)
 
 
 # ### Transmitindo informação na intensidade (potência) da portadora óptica

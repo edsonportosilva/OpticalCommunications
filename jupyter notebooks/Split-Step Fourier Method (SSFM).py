@@ -40,29 +40,29 @@ def theoryBER(M, EbN0, constType):
     return Pb  
 
 def CDcompensation(Ex, Ey, Ltotal, D, Fc, Fs):
-    
+
     c = 299792458   # speed of light (vacuum)
     c_kms = c/1e3
     λ = c_kms/Fc
     β2 = -(D*λ**2)/(2*np.pi*c_kms)
     γ = gamma
-    
+
     l = len(Ex)
-    
+
     Nfft = l;
 
     ω = 2*np.pi*Fs*fftfreq(Nfft)    
-   
+
     Ex = fft(Ex) #Pol. X 
     Ey = fft(Ey) #Pol. Y 
-    
+
     # CD compensation
     Ex = Ex*np.exp(-1j*(β2/2)*(ω**2)*(Ltotal))
     Ey = Ey*np.exp(-1j*(β2/2)*(ω**2)*(Ltotal))
-    
+
     Ex = ifft(Ex)
     Ey = ifft(Ey)
-      
+
     return Ex, Ey
 
 
@@ -70,29 +70,28 @@ def manakovSSF(Ei, hz, Lspan, Ltotal, alpha, gamma, D, Fc, Fs):
     
     Ex = Ei[:,0]
     Ey = Ei[:,1]
-    
+
     c = 299792458   # speed of light (vacuum)
     c_kms = c/1e3
     λ  = c_kms/Fc
     α  = alpha/(10*np.log10(np.exp(1)))
     β2 = -(D*λ**2)/(2*np.pi*c_kms)
     γ  = gamma
-            
+
     Nfft = len(Ex)
 
     ω = 2*np.pi*Fs*fftfreq(Nfft)
-    
+
     Nspans = int(np.floor(Ltotal/Lspan))
     Nsteps = int(np.floor(Lspan/hz))
 
     Ex = fft(Ex) #Pol. X 
     Ey = fft(Ey) #Pol. Y 
-    
+
     linOperator = np.exp(-(α/2)*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
-    
-    for spanN in tqdm(range(1, Nspans+1)):
-        for stepN in range(1, Nsteps+1):
-            
+
+    for _ in tqdm(range(1, Nspans+1)):
+        for _ in range(1, Nsteps+1):
             # First linear step (frequency domain)
             Ex = Ex*linOperator
             Ey = Ey*linOperator
@@ -100,22 +99,22 @@ def manakovSSF(Ei, hz, Lspan, Ltotal, alpha, gamma, D, Fc, Fs):
             # Nonlinear step (time domain)
             Ex = ifft(Ex);
             Ey = ifft(Ey);
-            
+
             Ex = Ex*np.exp(1j*γ*8/9*(Ex*np.conj(Ex) + Ey*np.conj(Ey))*hz)
             Ey = Ey*np.exp(1j*γ*8/9*(Ex*np.conj(Ex) + Ey*np.conj(Ey))*hz)
-        
+
             # Second linear step (frequency domain)
             Ex = fft(Ex);
             Ey = fft(Ey);
             Ex = Ex*linOperator
             Ey = Ey*linOperator
-        
+
         Ex = Ex*np.exp(α*Nsteps*hz)
         Ey = Ey*np.exp(α*Nsteps*hz)
-    
+
     Ex = ifft(Ex)
     Ey = ifft(Ey)
-    
+
     return Ex, Ey
     
 def edfa_lin(signal, gain, nf, fc, fs):
@@ -207,7 +206,7 @@ EbN0dB = 20
 
 # generate random bits
 np.random.seed(33)
-bits_x   = np.random.randint(2, size=3*2**14)    
+bits_x   = np.random.randint(2, size=3*2**14)
 np.random.seed(23)
 bits_y   = np.random.randint(2, size=3*2**14)    
 
@@ -228,7 +227,7 @@ symbolsUp_y = upsample(symb_y, SpS)
 
 # pulse shaping
 tindex, rrcFilter = rrcosfilter(N, alphaRRC, Ts, Fa)
-sig_x  = filterNoDelay(rrcFilter, symbolsUp_x)     
+sig_x  = filterNoDelay(rrcFilter, symbolsUp_x)
 sig_y  = filterNoDelay(rrcFilter, symbolsUp_y)
 
 sig_x  = np.sqrt(P0/2)*sig_x/np.sqrt(signal_power(sig_x))
@@ -259,7 +258,7 @@ bitsTx = bits_x
 sigRx = sigRx/np.sqrt(signal_power(sigRx))
 
 # matched filter
-sigRx = filterNoDelay(rrcFilter, sigRx)    
+sigRx = filterNoDelay(rrcFilter, sigRx)
 sigRx = sigRx/SpS
 
 # downsampling to one sample per symbol
@@ -290,7 +289,7 @@ EbN0dB_est = 10*np.log10(1/(signal_power(symbRx-symbTx)*np.log2(M)))
 BERtheory = theoryBER(M, EbN0dB,'qam')
 
 # print results
-print('EbN0: %3.2f dB, EbN0_est: %3.2f dB,\nBERtheory: %3.1e, BER: %3.1e ' %(EbN0dB, EbN0dB_est, BERtheory, BER))   
+print('EbN0: %3.2f dB, EbN0_est: %3.2f dB,\nBERtheory: %3.1e, BER: %3.1e ' %(EbN0dB, EbN0dB_est, BERtheory, BER))
 print('Total of bits counted: ', ERR.size)
 
 # plot constellations
@@ -306,7 +305,7 @@ plt.axis('square');
 # +
 from scipy.stats.kde import gaussian_kde
 
-y = (sigRx[0:30000]).real
+y = sigRx[:30000].real
 x = np.arange(0,y.size,1) % 24
 
 k = gaussian_kde(np.vstack([x, y]))
@@ -319,8 +318,8 @@ plt.pcolormesh(xi, yi, zi.reshape(xi.shape), alpha=1);
 # +
 from scipy.stats.kde import gaussian_kde
 
-y = (symbRx[0:30000]).real
-x = (symbRx[0:30000]).imag
+y = symbRx[:30000].real
+x = symbRx[:30000].imag
 
 k = gaussian_kde(np.vstack([x, y]))
 k.set_bandwidth(bw_method=k.factor/2)

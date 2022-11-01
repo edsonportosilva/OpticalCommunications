@@ -66,19 +66,19 @@ def eyediagram(sig, Nsamples, SpS, n=3, ptype='fast', plotlabel=None):
     
     if np.iscomplex(sig).any():
         d = 1
-        plotlabel_ = plotlabel+' [real]'
+        plotlabel_ = f'{plotlabel} [real]'
     else:
         d = 0
         plotlabel_ = plotlabel
-        
-    for ind in range(0, d+1):
+
+    for ind in range(d+1):
         if ind == 0:
-            y = sig[0:Nsamples].real
-            x = np.arange(0,y.size,1) % (n*SpS)            
+            y = sig[:Nsamples].real
+            x = np.arange(0,y.size,1) % (n*SpS)
         else:
-            y = sig[0:Nsamples].imag
-            plotlabel_ = plotlabel+' [imag]'       
-     
+            y = sig[:Nsamples].imag
+            plotlabel_ = f'{plotlabel} [imag]'       
+
         plt.figure();
         if ptype == 'fancy':            
             k = gaussian_kde(np.vstack([x, y]))
@@ -91,16 +91,16 @@ def eyediagram(sig, Nsamples, SpS, n=3, ptype='fast', plotlabel=None):
         elif ptype == 'fast':
             y[x == n*SpS] = np.nan;
             y[x == 0] = np.nan;
-            
+
             plt.plot(x/SpS, y, color='blue', alpha=0.8, label=plotlabel_);
             plt.xlim(min(x/SpS), max(x/SpS))
             plt.xlabel('symbol period (Ts)')
             plt.ylabel('amplitude')
             plt.title('eye diagram')
-            
+
             if plotlabel != None:
                 plt.legend(loc='upper left')
-                
+
             plt.grid()
             plt.show();
     return None
@@ -111,22 +111,22 @@ def sincInterp(x, fa):
     Ta_sinc = 1/fa_sinc
     Ta = 1/fa
     t = np.arange(0, x.size*32)*Ta_sinc
-    
-    plt.figure()  
+
+    plt.figure()
     y = upsample(x,32)
     y[y==0] = np.nan
     plt.plot(t,y.real,'ko', label='x[k]')
-    
+
     x_sum = 0
-    for k in range(0, x.size):
+    for k in range(x.size):
         xk_interp = x[k]*np.sinc((t-k*Ta)/Ta)
         x_sum += xk_interp
         plt.plot(t, xk_interp)           
-    
+
     plt.legend(loc="upper right")
     plt.xlim(min(t), max(t))
     plt.grid()
-    
+
     return x_sum, t
 
 def lowPassFIR(fc, fa, N, typeF = 'rect'):
@@ -164,34 +164,28 @@ def edc(Ei, L, D, Fc, Fs):
     
     :return Eo: CD compensated signal
     """
-    Eo = linFiberCh(Ei, L, 0, -D, Fc, Fs)
-    
-    return Eo
+    return linFiberCh(Ei, L, 0, -D, Fc, Fs)
 
-def cpr(Ei, N, constSymb, symbTx):    
+def cpr(Ei, N, constSymb, symbTx):
     """
     Carrier phase recovery (CPR)
     
     """    
-    ϕ  = np.zeros(Ei.shape)    
+    ϕ  = np.zeros(Ei.shape)
     θ  = np.zeros(Ei.shape)
-    
-    for k in range(0,len(Ei)):
+
+    for k in range(len(Ei)):
         
         decided = np.argmin(np.abs(Ei[k]*np.exp(1j*θ[k-1]) - constSymb)) # find closest constellation symbol
-        
+
         if k % 50 == 0:
             ϕ[k] = np.angle(symbTx[k]/(Ei[k])) # phase estimation with pilot symbol
         else:
             ϕ[k] = np.angle(constSymb[decided]/(Ei[k])) # phase estimation after symbol decision
-                
-        if k > N:
-            θ[k]  = np.mean(ϕ[k-N:k]) # moving average filter
-        else:           
-            θ[k] = np.angle(symbTx[k]/(Ei[k]))
-            
+
+        θ[k] = np.mean(ϕ[k-N:k]) if k > N else np.angle(symbTx[k]/(Ei[k]))
     Eo = Ei*np.exp(1j*θ) # compensate phase rotation
-        
+
     return Eo, ϕ, θ
 
 def fourthPowerFOE(Ei, Ts, plotSpec=False):
@@ -218,7 +212,7 @@ def fourthPowerFOE(Ei, Ts, plotSpec=False):
     
     return f[indFO]/4
 
-def dbp(Ei, Fs, Ltotal, Lspan, hz=0.5, alpha=0.2, gamma=1.3, D=16, Fc=193.1e12):      
+def dbp(Ei, Fs, Ltotal, Lspan, hz=0.5, alpha=0.2, gamma=1.3, D=16, Fc=193.1e12):
     """
     Digital backpropagation (symmetric, single-pol.)
 
@@ -240,35 +234,34 @@ def dbp(Ei, Fs, Ltotal, Lspan, hz=0.5, alpha=0.2, gamma=1.3, D=16, Fc=193.1e12):
     α  = -alpha/(10*np.log10(np.exp(1)))
     β2 = (D*λ**2)/(2*np.pi*c_kms)
     γ  = -gamma
-            
+
     Nfft = len(Ei)
 
     ω = 2*np.pi*Fs*fftfreq(Nfft)
-    
+
     Nspans = int(np.floor(Ltotal/Lspan))
     Nsteps = int(np.floor(Lspan/hz))   
-        
-    Ech = Ei.reshape(len(Ei),)    
+
+    Ech = Ei.reshape(len(Ei),)
     Ech = fft(Ech) #single-polarization field    
-    
+
     linOperator = np.exp(-(α/2)*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
-        
-    for spanN in tqdm(range(0, Nspans)):
-        
+
+    for _ in tqdm(range(Nspans)):
         Ech = Ech*np.exp((α/2)*Nsteps*hz)
-                
-        for stepN in range(0, Nsteps):            
+
+        for _ in range(Nsteps):
             # First linear step (frequency domain)
             Ech = Ech*linOperator            
-                      
+
             # Nonlinear step (time domain)
             Ech = ifft(Ech)
             Ech = Ech*np.exp(1j*γ*(Ech*np.conj(Ech))*hz)
-            
+
             # Second linear step (frequency domain)
-            Ech = fft(Ech)       
+            Ech = fft(Ech)
             Ech = Ech*linOperator             
-                
+
     Ech = ifft(Ech) 
-       
+
     return Ech.reshape(len(Ech),)

@@ -17,9 +17,7 @@ def mzm(Ai, Vπ, u, Vb):
     :return Ao: output optical signal
     """
     π  = np.pi
-    Ao = Ai*np.cos(0.5/Vπ*(u+Vb)*π)
-    
-    return Ao
+    return Ai*np.cos(0.5/Vπ*(u+Vb)*π)
 
 def iqm(Ai, u, Vπ, VbI, VbQ):
     """
@@ -33,9 +31,9 @@ def iqm(Ai, u, Vπ, VbI, VbQ):
     
     :return Ao: output optical signal
     """
-    Ao = mzm(Ai/np.sqrt(2), Vπ, u.real, VbI) + 1j*mzm(Ai/np.sqrt(2), Vπ, u.imag, VbQ)
-    
-    return Ao
+    return mzm(Ai / np.sqrt(2), Vπ, u.real, VbI) + 1j * mzm(
+        Ai / np.sqrt(2), Vπ, u.imag, VbQ
+    )
 
 def linFiberCh(Ei, L, alpha, D, Fc, Fs):
     """
@@ -103,19 +101,17 @@ def hybrid_2x4_90deg(E1, E2):
     :return: hybrid outputs
     """
     assert E1.size == E2.size, 'E1 and E2 need to have the same size'
-    
+
     # optical hybrid transfer matrix    
     T = np.array([[ 1/2,  1j/2,  1j/2, -1/2],
                   [ 1j/2, -1/2,  1/2,  1j/2],
                   [ 1j/2,  1/2, -1j/2, -1/2],
                   [-1/2,  1j/2, -1/2,  1j/2]])
-    
+
     Ei = np.array([E1, np.zeros((E1.size,)), 
                    np.zeros((E1.size,)), E2])    
-    
-    Eo = T@Ei
-    
-    return Eo
+
+    return T@Ei
     
 def coherentReceiver(Es, Elo, Rd=1):
     """
@@ -163,7 +159,7 @@ def edfa(Ei, Fs, G=20, NF=4.5, Fc=193.1e12):
     noise    = normal(0, np.sqrt(p_noise), Ei.shape) + 1j*normal(0, np.sqrt(p_noise), Ei.shape)
     return Ei*np.sqrt(G_lin) + noise
 
-def ssfm(Ei, Fs, paramCh):      
+def ssfm(Ei, Fs, paramCh):
     """
     Split-step Fourier method (symmetric, single-pol.)
 
@@ -194,14 +190,14 @@ def ssfm(Ei, Fs, paramCh):
     paramCh.amp    = getattr(paramCh, 'amp', 'edfa')
     paramCh.NF     = getattr(paramCh, 'NF', 4.5)   
 
-    Ltotal = paramCh.Ltotal 
+    Ltotal = paramCh.Ltotal
     Lspan  = paramCh.Lspan
     hz     = paramCh.hz
-    alpha  = paramCh.alpha  
-    D      = paramCh.D      
-    gamma  = paramCh.gamma 
-    Fc     = paramCh.Fc     
-    amp    = paramCh.amp   
+    alpha  = paramCh.alpha
+    D      = paramCh.D
+    gamma  = paramCh.gamma
+    Fc     = paramCh.Fc
+    amp    = paramCh.amp
     NF     = paramCh.NF
 
     # channel parameters  
@@ -214,20 +210,20 @@ def ssfm(Ei, Fs, paramCh):
     # generate frequency axis 
     Nfft = len(Ei)
     ω = 2*np.pi*Fs*fftfreq(Nfft)
-    
+
     Nspans = int(np.floor(Ltotal/Lspan))
     Nsteps = int(np.floor(Lspan/hz))
-    
+
     Ech = Ei.reshape(len(Ei),)  
 
     # define linear operator
     linOperator = np.exp(-(α/2)*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
-    
-    for spanN in tqdm(range(1, Nspans+1)):   
+
+    for _ in tqdm(range(1, Nspans+1)):
         Ech = fft(Ech) #single-polarization field
-        
+
         # fiber propagation step
-        for stepN in range(1, Nsteps+1):            
+        for _ in range(1, Nsteps+1):
             # First linear step (frequency domain)
             Ech = Ech*linOperator            
 
@@ -236,22 +232,22 @@ def ssfm(Ei, Fs, paramCh):
             Ech = Ech*np.exp(1j*γ*(Ech*np.conj(Ech))*hz)
 
             # Second linear step (frequency domain)
-            Ech = fft(Ech)       
+            Ech = fft(Ech)
             Ech = Ech*linOperator         
 
         # amplification step
         Ech = ifft(Ech)
-        if amp =='edfa':
+        if amp == 'edfa':
             Ech = edfa(Ech, Fs, alpha*Lspan, NF, Fc)
-        elif amp =='ideal':
+        elif amp == 'ideal':
             Ech = Ech*np.exp(α/2*Nsteps*hz)
-        elif amp == None:
+        elif amp is None:
             Ech = Ech*np.exp(0);         
-          
+
     return Ech.reshape(len(Ech),), paramCh
 
 
-def manakov_ssf(Ei, Fs, paramCh):      
+def manakov_ssf(Ei, Fs, paramCh):
     """
     Manakov model split-step Fourier (symmetric, dual-pol.)
 
@@ -282,14 +278,14 @@ def manakov_ssf(Ei, Fs, paramCh):
     paramCh.amp    = getattr(paramCh, 'amp', 'edfa')
     paramCh.NF     = getattr(paramCh, 'NF', 4.5)   
 
-    Ltotal = paramCh.Ltotal 
+    Ltotal = paramCh.Ltotal
     Lspan  = paramCh.Lspan
     hz     = paramCh.hz
-    alpha  = paramCh.alpha  
-    D      = paramCh.D      
-    gamma  = paramCh.gamma 
-    Fc     = paramCh.Fc     
-    amp    = paramCh.amp   
+    alpha  = paramCh.alpha
+    D      = paramCh.D
+    gamma  = paramCh.gamma
+    Fc     = paramCh.Fc
+    amp    = paramCh.amp
     NF     = paramCh.NF
 
     # channel parameters  
@@ -302,22 +298,22 @@ def manakov_ssf(Ei, Fs, paramCh):
     # generate frequency axis 
     Nfft = len(Ei)
     ω = 2*np.pi*Fs*fftfreq(Nfft)
-    
+
     Nspans = int(np.floor(Ltotal/Lspan))
     Nsteps = int(np.floor(Lspan/hz))
-    
+
     Ech_x = Ei[:,0].reshape(len(Ei),)
     Ech_y = Ei[:,1].reshape(len(Ei),) 
 
     # define linear operator
     linOperator = np.exp(-(α/2)*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
-    
-    for spanN in tqdm(range(1, Nspans+1)):   
+
+    for _ in tqdm(range(1, Nspans+1)):
         Ech_x = fft(Ech_x) #polarization x field
         Ech_y = fft(Ech_y) #polarization y field
-        
+
         # fiber propagation step
-        for stepN in range(1, Nsteps+1):            
+        for _ in range(1, Nsteps+1):
             # First linear step (frequency domain)
             Ech_x = Ech_x*linOperator
             Ech_y = Ech_y*linOperator
@@ -331,35 +327,35 @@ def manakov_ssf(Ei, Fs, paramCh):
             # Second linear step (frequency domain)
             Ech_x = fft(Ech_x)
             Ech_y = fft(Ech_y)
-            
+
             Ech_x = Ech_x*linOperator
             Ech_y = Ech_y*linOperator
-            
+
         # amplification step
         Ech_x = ifft(Ech_x)
         Ech_y = ifft(Ech_y)
-        
-        if amp =='edfa':
+
+        if amp == 'edfa':
             Ech_x = edfa(Ech_x, Fs, alpha*Lspan, NF, Fc)
             Ech_y = edfa(Ech_y, Fs, alpha*Lspan, NF, Fc)
-        elif amp =='ideal':
+        elif amp == 'ideal':
             Ech_x = Ech_x*np.exp(α/2*Nsteps*hz)
             Ech_y = Ech_y*np.exp(α/2*Nsteps*hz)
-        elif amp == None:
+        elif amp is None:
             Ech_x = Ech_x*np.exp(0);
             Ech_y = Ech_y*np.exp(0);
 
     Ech = np.array([Ech_x.reshape(len(Ei),),
                     Ech_y.reshape(len(Ei),)]).T
-    
+
     return Ech, paramCh
 
 def phaseNoise(lw, Nsamples, Ts):
     
-    σ2 = 2*np.pi*lw*Ts    
+    σ2 = 2*np.pi*lw*Ts
     phi = np.zeros(Nsamples)
-    
-    for ind in range(0, Nsamples-1):
+
+    for ind in range(Nsamples-1):
         phi[ind+1] = phi[ind] + normal(0, np.sqrt(σ2))
-        
+
     return phi

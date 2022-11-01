@@ -44,7 +44,7 @@ def pulseShape(pulseType, SpS=2, N=1024, alpha=0.1, Ts=1):
 
 def eyediagram(sig, Nsamples, SpS, n=3):
 
-    y = sig[0:Nsamples].real
+    y = sig[:Nsamples].real
     x = np.arange(0,y.size,1) % (n*SpS)
 
     k = gaussian_kde(np.vstack([x, y]))

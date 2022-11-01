@@ -68,10 +68,10 @@ def GrayMapping(M, constType):
     
     L   = int(np.sqrt(M)-1)
     bitsSymb = int(np.log2(M))
-    
+
     code = GrayCode(bitsSymb)
     a    = list(code.generate_gray())
-    
+
     if constType == 'qam':
         PAM = np.arange(-L, L+1, 2)
         PAM = np.array([PAM])
@@ -79,27 +79,27 @@ def GrayMapping(M, constType):
         # generate complex square M-QAM constellation
         const = repmat(PAM, L+1, 1) + 1j*repmat(np.flip(PAM.T,0), 1, L+1)
         const = const.T
-    
+
         for ind in np.arange(1,L+1,2):
             const[ind] = np.flip(const[ind],0)        
-        
+
     elif constType == 'psk':
         pskPhases = np.arange(0,2*np.pi,2*np.pi/M)
-        
+
         # generate complex M-PSK constellation
         const     = np.exp(1j*pskPhases) 
-    
+
     const    = const.reshape(M,1)
     const_   = np.zeros((M,2),dtype=complex)
-    
 
-    for ind in range(0,M):    
+
+    for ind in range(M):    
         const_[ind,0]   = const[ind,0]   # complex constellation symbol
         const_[ind,1]   =  int(a[ind],2) # mapped bit sequence (as integer decimal)
-        
+
     # sort complex symbols column according to their mapped bit sequence (as integer decimal)                 
     const = const_[const_[:,1].real.argsort()] 
-    
+
     return const
 
 
@@ -121,12 +121,10 @@ def modulateGray(bits, M, constType):
 def demodulateGray(symb, M ,constType):
     
     const = GrayMapping(M, constType)
-         
-    hdDecision_vec = np.vectorize(hdDecision, excluded = [1])        
-    index_list = hdDecision_vec(symb, const[:,0])     
-    demod_bits = dec2bitarray(index_list, int(np.log2(M)))
-    
-    return demod_bits
+
+    hdDecision_vec = np.vectorize(hdDecision, excluded = [1])
+    index_list = hdDecision_vec(symb, const[:,0])
+    return dec2bitarray(index_list, int(np.log2(M)))
 
 def pulseShape(pulseType, SpS=2, N=1024, alpha=0.1, Ts=1):
     
@@ -158,7 +156,7 @@ Fa     = 1/(Ts/SpS)    # Frequência de amostragem do sinal (amostras/segundo)
 alpha  = 0.05          # Rolloff do filtro RRC
 N      = 1024          # Número de coeficientes do filtro RRC
 EbN0dB = 20
-   
+
 # generate random bits
 bitsTx   = np.random.randint(2, size=3*2**12)    
 
@@ -176,7 +174,7 @@ symbolsUp = upsample(symbTx, SpS)
 # pulse shaping
 #pulseFilter = pulseShape('rrc', SpS, N, alpha, Ts)
 tindex, rrcFilter = rrcosfilter(N, alpha, Ts, Fa)
-sigTx  = filterNoDelay(pulseFilter, symbolsUp)     
+sigTx  = filterNoDelay(pulseFilter, symbolsUp)
 sigTx  = sigTx/np.sqrt(signal_power(sigTx))
 
 # plot eye diagrams
@@ -211,7 +209,7 @@ plt.xlim(-Fa/2,Fa/2);
 
 # +
 # matched filter
-sigRx = filterNoDelay(rrcFilter, sigRx)    
+sigRx = filterNoDelay(rrcFilter, sigRx)
 sigRx = sigRx/SpS
 
 # plot eye diagrams
@@ -240,7 +238,7 @@ EbN0dB_est = 10*np.log10(1/(signal_power(symbRx-symbTx)*np.log2(M)))
 BERtheory = theoryBER(M, EbN0dB,'qam')
 
 # print results
-print('EbN0: %3.2f dB, EbN0_est: %3.2f dB,\nBERtheory: %3.1e, BER: %3.1e ' %(EbN0dB, EbN0dB_est, BERtheory, BER))   
+print('EbN0: %3.2f dB, EbN0_est: %3.2f dB,\nBERtheory: %3.1e, BER: %3.1e ' %(EbN0dB, EbN0dB_est, BERtheory, BER))
 print('Total of bits counted: ', ERR.size)
 
 # plot constellations
@@ -268,10 +266,11 @@ EbN0dB_    = np.arange(10,20.5,0.5)
 BER        = np.zeros(EbN0dB_.shape)
 EbN0dB_est = np.zeros(EbN0dB_.shape)
 
+discard = 100
 for indSNR in range(EbN0dB_.size):
     
     EbN0dB = EbN0dB_[indSNR]
-    
+
     # generate random bits
     bitsTx   = np.random.randint(2, size=3*2**18)    
 
@@ -279,18 +278,18 @@ for indSNR in range(EbN0dB_.size):
     mod = QAMModem(m=M)
     symbTx = mod.modulate(bitsTx)
     Es = mod.Es;
-    
+
     # Normalize symbols energy to 1
     symbTx = symbTx/np.sqrt(Es)
-    
+
     # Aumenta a taxa de amostragem do sinal para SpS amostras/símbolo
     symbolsUp = upsample(symbTx, SpS)
-                                   
+
     # filtro formatador de pulso 
     tindex, rrcFilter = rrcosfilter(N, alpha, Ts, Fa)
-    symbolsUp  = filterNoDelay(rrcFilter, symbolsUp)     
+    symbolsUp  = filterNoDelay(rrcFilter, symbolsUp)
     symbolsUp  = symbolsUp/np.sqrt(signal_power(symbolsUp))
-    
+
     # AWGN channel
     snrdB    = EbN0dB + 10*np.log10(np.log2(M))
     noiseVar = 1/(10**(snrdB/10))
@@ -300,24 +299,23 @@ for indSNR in range(EbN0dB_.size):
     noise    = 1/np.sqrt(2)*noise    
 
     symbRx = symbolsUp + noise   
-     
+
     # filtro casado
-    symbRx = filterNoDelay(rrcFilter, symbRx)    
+    symbRx = filterNoDelay(rrcFilter, symbRx)
     symbRx = symbRx/SpS
-    
+
     # Decimação para uma amostra por símbolo
     symbRx = symbRx[0::SpS]
-        
+
     # Demodulate received symbols        
-    bitsRx = mod.demodulate(np.sqrt(Es)*symbRx, demod_type = 'hard') 
-    discard = 100
+    bitsRx = mod.demodulate(np.sqrt(Es)*symbRx, demod_type = 'hard')
     numBits = bitsTx.size;
-    
+
     # BER calculation, EbN0 estimation
     ERR = np.logical_xor(bitsRx[discard:numBits-discard], bitsTx[discard:numBits-discard])
     BER[indSNR] = ERR.sum()/ERR.size
     EbN0dB_est[indSNR] = 10*np.log10(1/(signal_power(symbRx-symbTx)*np.log2(M)))
-    
+
     print('EbN0: %3.2f dB, EbN0_est: %3.2f dB, BER: %3.1e ' %(EbN0dB, EbN0dB_est[indSNR], BER[indSNR]))    
 
 
