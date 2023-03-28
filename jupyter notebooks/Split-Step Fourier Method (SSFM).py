@@ -16,6 +16,7 @@
 
 from numpy.fft import fft, ifft, fftshift, ifftshift, fftfreq
 import numpy as np
+from tqdm import tqdm
 from scipy import special as spec
 
 
@@ -42,7 +43,7 @@ def CDcompensation(Ex, Ey, Ltotal, D, Fc, Fs):
     
     c = 299792458   # speed of light (vacuum)
     c_kms = c/1e3
-    λ = c/Fc
+    λ = c_kms/Fc
     β2 = -(D*λ**2)/(2*np.pi*c_kms)
     γ = gamma
     
@@ -65,11 +66,14 @@ def CDcompensation(Ex, Ey, Ltotal, D, Fc, Fs):
     return Ex, Ey
 
 
-def manakovSSF(Ex, Ey, hz, Lspan, Ltotal, alpha, gamma, D, Fc, Fs):
+def manakovSSF(Ei, hz, Lspan, Ltotal, alpha, gamma, D, Fc, Fs):
+    
+    Ex = Ei[:,0]
+    Ey = Ei[:,1]
     
     c = 299792458   # speed of light (vacuum)
     c_kms = c/1e3
-    λ  = c/Fc
+    λ  = c_kms/Fc
     α  = alpha/(10*np.log10(np.exp(1)))
     β2 = -(D*λ**2)/(2*np.pi*c_kms)
     γ  = gamma
@@ -84,25 +88,27 @@ def manakovSSF(Ex, Ey, hz, Lspan, Ltotal, alpha, gamma, D, Fc, Fs):
     Ex = fft(Ex) #Pol. X 
     Ey = fft(Ey) #Pol. Y 
     
-    for spanN in range(1, Nspans+1):
+    linOperator = np.exp(-(α/2)*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
+    
+    for spanN in tqdm(range(1, Nspans+1)):
         for stepN in range(1, Nsteps+1):
             
             # First linear step (frequency domain)
-            Ex = Ex*np.exp(-α*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
-            Ey = Ey*np.exp(-α*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
+            Ex = Ex*linOperator
+            Ey = Ey*linOperator
 
             # Nonlinear step (time domain)
             Ex = ifft(Ex);
             Ey = ifft(Ey);
             
-            Ex = Ex*np.exp(1j*γ*8/9*(np.abs(Ex)**2 + np.abs(Ey)**2)*hz)
-            Ey = Ey*np.exp(1j*γ*8/9*(np.abs(Ex)**2 + np.abs(Ey)**2)*hz)
-   
+            Ex = Ex*np.exp(1j*γ*8/9*(Ex*np.conj(Ex) + Ey*np.conj(Ey))*hz)
+            Ey = Ey*np.exp(1j*γ*8/9*(Ex*np.conj(Ex) + Ey*np.conj(Ey))*hz)
+        
             # Second linear step (frequency domain)
             Ex = fft(Ex);
             Ey = fft(Ey);
-            Ex = Ex*np.exp(-α*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
-            Ey = Ey*np.exp(-α*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
+            Ex = Ex*linOperator
+            Ey = Ey*linOperator
         
         Ex = Ex*np.exp(α*Nsteps*hz)
         Ey = Ey*np.exp(α*Nsteps*hz)
@@ -112,6 +118,16 @@ def manakovSSF(Ex, Ey, hz, Lspan, Ltotal, alpha, gamma, D, Fc, Fs):
     
     return Ex, Ey
     
+def edfa_lin(signal, gain, nf, fc, fs):
+    nf_lin   = 10**(nf/10)
+    gain_lin = 10**(gain/10)
+    nsp      = (gain_lin*nf_lin - 1)/(2*(gain_lin - 1))
+    s_ase    = (gain_lin - 1) * nsp * h * freq
+    p_noise  = s_ase*fs
+    mean_noise = 0
+    noise    = np.random.normal(mean_noise, np.sqrt(p_noise), signal.shape) + 1j*np.random.normal(mean_noise, np.sqrt(p_noise), signal.shape)
+    return signal*np.sqrt(gain_lin) + noise
+
 
 
 # -
@@ -149,6 +165,7 @@ from commpy.modulation import Modem, QAMModem
 from commpy.utilities  import signal_power, upsample
 from commpy.filters    import rrcosfilter
 from scipy.signal import lfilter
+import time as tempo
 
 
 def filterNoDelay(h, x):
@@ -171,10 +188,10 @@ Lspan  = 50
 hz = 1
 alpha = 0.2
 gamma = 1.3
-D = 4
+D = 16
 Fc = 193.1e12
 Fs = 64e9
-P0 = 4e-3
+P0 = 3e-3
 
 # simulation parameters
 
@@ -184,10 +201,10 @@ SpS = 8
 Rs     = 32e9
 Ts     = 1/Rs         # Período de símbolo em segundos
 Fa     = 1/(Ts/SpS)   # Frequência de amostragem do sinal (amostras/segundo)
-alpha  = 1            # Rolloff do filtro RRC
+alphaRRC  = 0.01            # Rolloff do filtro RRC
 N      = 4*1024       # Número de coeficientes do filtro RRC
 EbN0dB = 20
-   
+
 # generate random bits
 np.random.seed(33)
 bits_x   = np.random.randint(2, size=3*2**14)    
@@ -210,24 +227,29 @@ symbolsUp_x = upsample(symb_x, SpS)
 symbolsUp_y = upsample(symb_y, SpS)
 
 # pulse shaping
-tindex, rrcFilter = rrcosfilter(N, alpha, Ts, Fa)
+tindex, rrcFilter = rrcosfilter(N, alphaRRC, Ts, Fa)
 sig_x  = filterNoDelay(rrcFilter, symbolsUp_x)     
 sig_y  = filterNoDelay(rrcFilter, symbolsUp_y)
 
 sig_x  = np.sqrt(P0/2)*sig_x/np.sqrt(signal_power(sig_x))
 sig_y  = np.sqrt(P0/2)*sig_y/np.sqrt(signal_power(sig_y))
 
-
+s = tempo.time()
 sig_x_out, sig_y_out = manakovSSF(sig_x, sig_y, hz, Lspan, Ltotal, alpha, gamma, D, Fc, Fa)
+e = tempo.time()
+print(e - s)
+
 sig_x_out, sig_y_out = CDcompensation(sig_x_out, sig_y_out, Ltotal, D, Fc, Fa)
 # -
 
 # plot spectrums
 plt.figure(2);
-plt.psd(sig_x_out,Fs=Fa, NFFT = 16*1024, label = 'Noise spectrum')
+plt.psd(sig_x_out,Fs=Fa, NFFT = 16*1024, label = 'Rx spectrum')
 plt.psd(sig_x,Fs=Fa, NFFT = 16*1024, label = 'Tx spectrum')
 plt.legend(loc='upper left');
 plt.xlim(-Fa/2,Fa/2);
+
+bits_x.shape
 
 # +
 sigRx = sig_x_out
@@ -295,8 +317,10 @@ zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 plt.pcolormesh(xi, yi, zi.reshape(xi.shape), alpha=1);
 
 # +
-y = (sigRx[0:30000]).real
-x = (sigRx[0:30000]).imag
+from scipy.stats.kde import gaussian_kde
+
+y = (symbRx[0:30000]).real
+x = (symbRx[0:30000]).imag
 
 k = gaussian_kde(np.vstack([x, y]))
 k.set_bandwidth(bw_method=k.factor/2)
