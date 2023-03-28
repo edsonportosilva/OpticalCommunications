@@ -56,7 +56,7 @@ figsize(10, 3)
 
 # + [markdown] toc=true
 # <h1>Table of Contents<span class="tocSkip"></span></h1>
-# <div class="toc"><ul class="toc-item"><li><span><a href="#Representações-para-a-portadora-óptica" data-toc-modified-id="Representações-para-a-portadora-óptica-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Representações para a portadora óptica</a></span><ul class="toc-item"><li><span><a href="#Modulações-digitais" data-toc-modified-id="Modulações-digitais-1.1"><span class="toc-item-num">1.1&nbsp;&nbsp;</span>Modulações digitais</a></span></li><li><span><a href="#Diagramas-de-constelação" data-toc-modified-id="Diagramas-de-constelação-1.2"><span class="toc-item-num">1.2&nbsp;&nbsp;</span>Diagramas de constelação</a></span></li></ul></li><li><span><a href="#Modulador-de-Mach-Zehnder" data-toc-modified-id="Modulador-de-Mach-Zehnder-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Modulador de Mach-Zehnder</a></span><ul class="toc-item"><li><span><a href="#Transmitindo-informação-na-intensidade-(potência)-da-portadora-óptica" data-toc-modified-id="Transmitindo-informação-na-intensidade-(potência)-da-portadora-óptica-2.1"><span class="toc-item-num">2.1&nbsp;&nbsp;</span>Transmitindo informação na intensidade (potência) da portadora óptica</a></span></li><li><span><a href="#Transmitindo-informação-na-amplitude-do-campo-elétrico" data-toc-modified-id="Transmitindo-informação-na-amplitude-do-campo-elétrico-2.2"><span class="toc-item-num">2.2&nbsp;&nbsp;</span>Transmitindo informação na amplitude do campo elétrico</a></span></li><li><span><a href="#Razão-de-extinção" data-toc-modified-id="Razão-de-extinção-2.3"><span class="toc-item-num">2.3&nbsp;&nbsp;</span>Razão de extinção</a></span></li></ul></li><li><span><a href="#Intervalos-de-sinalização" data-toc-modified-id="Intervalos-de-sinalização-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Intervalos de sinalização</a></span><ul class="toc-item"><li><span><a href="#Teorema-da-amostragem" data-toc-modified-id="Teorema-da-amostragem-3.1"><span class="toc-item-num">3.1&nbsp;&nbsp;</span>Teorema da amostragem</a></span></li><li><span><a href="#Exemplo-1:-função-sinc(t)" data-toc-modified-id="Exemplo-1:-função-sinc(t)-3.2"><span class="toc-item-num">3.2&nbsp;&nbsp;</span>Exemplo 1: função sinc(t)</a></span></li><li><span><a href="#Exemplo-2:-chirp-de-frequência-linear" data-toc-modified-id="Exemplo-2:-chirp-de-frequência-linear-3.3"><span class="toc-item-num">3.3&nbsp;&nbsp;</span>Exemplo 2: chirp de frequência linear</a></span></li></ul></li><li><span><a href="#Chaveamento-por-deslocamento-de-amplitude-(amplitude-shift-keying---ASK-ou-pulse-amplitude-modulation---PAM)" data-toc-modified-id="Chaveamento-por-deslocamento-de-amplitude-(amplitude-shift-keying---ASK-ou-pulse-amplitude-modulation---PAM)-4"><span class="toc-item-num">4&nbsp;&nbsp;</span>Chaveamento por deslocamento de amplitude (<em>amplitude shift-keying</em> - ASK ou <em>pulse amplitude modulation</em> - PAM)</a></span><ul class="toc-item"><li><span><a href="#Gerando-sinais-binários-OOK" data-toc-modified-id="Gerando-sinais-binários-OOK-4.1"><span class="toc-item-num">4.1&nbsp;&nbsp;</span>Gerando sinais binários OOK</a></span><ul class="toc-item"><li><span><a href="#Pulso-retangular-ideal" data-toc-modified-id="Pulso-retangular-ideal-4.1.1"><span class="toc-item-num">4.1.1&nbsp;&nbsp;</span>Pulso retangular ideal</a></span></li><li><span><a href="#Pulso-NRZ-típico" data-toc-modified-id="Pulso-NRZ-típico-4.1.2"><span class="toc-item-num">4.1.2&nbsp;&nbsp;</span>Pulso NRZ típico</a></span></li><li><span><a href="#Pulso-cosseno-levantado" data-toc-modified-id="Pulso-cosseno-levantado-4.1.3"><span class="toc-item-num">4.1.3&nbsp;&nbsp;</span>Pulso cosseno levantado</a></span></li></ul></li></ul></li><li><span><a href="#Densidade-espectral-de-potência-de-sinais-modulados-digitalmenente" data-toc-modified-id="Densidade-espectral-de-potência-de-sinais-modulados-digitalmenente-5"><span class="toc-item-num">5&nbsp;&nbsp;</span>Densidade espectral de potência de sinais modulados digitalmenente</a></span><ul class="toc-item"><li><span><a href="#Valor-médio-e-autocorrelação-de-$V(t)$" data-toc-modified-id="Valor-médio-e-autocorrelação-de-$V(t)$-5.1"><span class="toc-item-num">5.1&nbsp;&nbsp;</span>Valor médio e autocorrelação de $V(t)$</a></span><ul class="toc-item"><li><span><a href="#Valor-médio" data-toc-modified-id="Valor-médio-5.1.1"><span class="toc-item-num">5.1.1&nbsp;&nbsp;</span>Valor médio</a></span></li><li><span><a href="#Autocorrelação" data-toc-modified-id="Autocorrelação-5.1.2"><span class="toc-item-num">5.1.2&nbsp;&nbsp;</span>Autocorrelação</a></span></li></ul></li><li><span><a href="#Densidade-espectral-de-potência-$\mathcal{S}_{V}(f)$" data-toc-modified-id="Densidade-espectral-de-potência-$\mathcal{S}_{V}(f)$-5.2"><span class="toc-item-num">5.2&nbsp;&nbsp;</span>Densidade espectral de potência $\mathcal{S}_{V}(f)$</a></span></li><li><span><a href="#Exemplos-de-densidade-espectral-de-potência-de-sinais-modulados" data-toc-modified-id="Exemplos-de-densidade-espectral-de-potência-de-sinais-modulados-5.3"><span class="toc-item-num">5.3&nbsp;&nbsp;</span>Exemplos de densidade espectral de potência de sinais modulados</a></span></li></ul></li><li><span><a href="#Gerando-sinais-4-PAM" data-toc-modified-id="Gerando-sinais-4-PAM-6"><span class="toc-item-num">6&nbsp;&nbsp;</span>Gerando sinais 4-PAM</a></span></li><li><span><a href="#Gerando-sinais-QPSK" data-toc-modified-id="Gerando-sinais-QPSK-7"><span class="toc-item-num">7&nbsp;&nbsp;</span>Gerando sinais QPSK</a></span></li><li><span><a href="#Formatação--de-pulso-óptica:-pulsos-retorno-ao-zero-(RZ)" data-toc-modified-id="Formatação--de-pulso-óptica:-pulsos-retorno-ao-zero-(RZ)-8"><span class="toc-item-num">8&nbsp;&nbsp;</span>Formatação  de pulso óptica: pulsos retorno-ao-zero (RZ)</a></span></li><li><span><a href="#Pente-de-frequências-(frequency-comb)" data-toc-modified-id="Pente-de-frequências-(frequency-comb)-9"><span class="toc-item-num">9&nbsp;&nbsp;</span>Pente de frequências (frequency comb)</a></span></li><li><span><a href="#Referências" data-toc-modified-id="Referências-10"><span class="toc-item-num">10&nbsp;&nbsp;</span>Referências</a></span></li></ul></div>
+# <div class="toc"><ul class="toc-item"><li><span><a href="#Representações-para-a-portadora-óptica" data-toc-modified-id="Representações-para-a-portadora-óptica-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Representações para a portadora óptica</a></span><ul class="toc-item"><li><span><a href="#Modulações-digitais" data-toc-modified-id="Modulações-digitais-1.1"><span class="toc-item-num">1.1&nbsp;&nbsp;</span>Modulações digitais</a></span></li><li><span><a href="#Diagramas-de-constelação" data-toc-modified-id="Diagramas-de-constelação-1.2"><span class="toc-item-num">1.2&nbsp;&nbsp;</span>Diagramas de constelação</a></span></li></ul></li><li><span><a href="#Modulador-de-Mach-Zehnder" data-toc-modified-id="Modulador-de-Mach-Zehnder-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Modulador de Mach-Zehnder</a></span><ul class="toc-item"><li><span><a href="#Transmitindo-informação-na-intensidade-(potência)-da-portadora-óptica-($V_b-=-\pm-V_π/2$)" data-toc-modified-id="Transmitindo-informação-na-intensidade-(potência)-da-portadora-óptica-($V_b-=-\pm-V_π/2$)-2.1"><span class="toc-item-num">2.1&nbsp;&nbsp;</span>Transmitindo informação na intensidade (potência) da portadora óptica ($V_b = \pm V_π/2$)</a></span></li><li><span><a href="#Transmitindo-informação-na-amplitude-do-campo-elétrico-($V_b-=-\pm-V_π$)" data-toc-modified-id="Transmitindo-informação-na-amplitude-do-campo-elétrico-($V_b-=-\pm-V_π$)-2.2"><span class="toc-item-num">2.2&nbsp;&nbsp;</span>Transmitindo informação na amplitude do campo elétrico ($V_b = \pm V_π$)</a></span></li><li><span><a href="#Razão-de-extinção" data-toc-modified-id="Razão-de-extinção-2.3"><span class="toc-item-num">2.3&nbsp;&nbsp;</span>Razão de extinção</a></span></li></ul></li><li><span><a href="#Intervalos-de-sinalização" data-toc-modified-id="Intervalos-de-sinalização-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Intervalos de sinalização</a></span><ul class="toc-item"><li><span><a href="#Teorema-da-amostragem" data-toc-modified-id="Teorema-da-amostragem-3.1"><span class="toc-item-num">3.1&nbsp;&nbsp;</span>Teorema da amostragem</a></span></li><li><span><a href="#Exemplo-1:-função-sinc(t)" data-toc-modified-id="Exemplo-1:-função-sinc(t)-3.2"><span class="toc-item-num">3.2&nbsp;&nbsp;</span>Exemplo 1: função sinc(t)</a></span></li><li><span><a href="#Exemplo-2:-chirp-de-frequência-linear" data-toc-modified-id="Exemplo-2:-chirp-de-frequência-linear-3.3"><span class="toc-item-num">3.3&nbsp;&nbsp;</span>Exemplo 2: chirp de frequência linear</a></span></li></ul></li><li><span><a href="#Chaveamento-por-deslocamento-de-amplitude-(amplitude-shift-keying---ASK-ou-pulse-amplitude-modulation---PAM)" data-toc-modified-id="Chaveamento-por-deslocamento-de-amplitude-(amplitude-shift-keying---ASK-ou-pulse-amplitude-modulation---PAM)-4"><span class="toc-item-num">4&nbsp;&nbsp;</span>Chaveamento por deslocamento de amplitude (<em>amplitude shift-keying</em> - ASK ou <em>pulse amplitude modulation</em> - PAM)</a></span><ul class="toc-item"><li><span><a href="#Gerando-sinais-binários-OOK" data-toc-modified-id="Gerando-sinais-binários-OOK-4.1"><span class="toc-item-num">4.1&nbsp;&nbsp;</span>Gerando sinais binários OOK</a></span><ul class="toc-item"><li><span><a href="#Pulso-retangular-ideal" data-toc-modified-id="Pulso-retangular-ideal-4.1.1"><span class="toc-item-num">4.1.1&nbsp;&nbsp;</span>Pulso retangular ideal</a></span></li><li><span><a href="#Pulso-NRZ-típico" data-toc-modified-id="Pulso-NRZ-típico-4.1.2"><span class="toc-item-num">4.1.2&nbsp;&nbsp;</span>Pulso NRZ típico</a></span></li><li><span><a href="#Pulso-cosseno-levantado" data-toc-modified-id="Pulso-cosseno-levantado-4.1.3"><span class="toc-item-num">4.1.3&nbsp;&nbsp;</span>Pulso cosseno levantado</a></span></li></ul></li></ul></li><li><span><a href="#Densidade-espectral-de-potência-de-sinais-modulados-digitalmenente" data-toc-modified-id="Densidade-espectral-de-potência-de-sinais-modulados-digitalmenente-5"><span class="toc-item-num">5&nbsp;&nbsp;</span>Densidade espectral de potência de sinais modulados digitalmenente</a></span><ul class="toc-item"><li><span><a href="#Valor-médio-e-autocorrelação-de-$V(t)$" data-toc-modified-id="Valor-médio-e-autocorrelação-de-$V(t)$-5.1"><span class="toc-item-num">5.1&nbsp;&nbsp;</span>Valor médio e autocorrelação de $V(t)$</a></span><ul class="toc-item"><li><span><a href="#Valor-médio" data-toc-modified-id="Valor-médio-5.1.1"><span class="toc-item-num">5.1.1&nbsp;&nbsp;</span>Valor médio</a></span></li><li><span><a href="#Autocorrelação" data-toc-modified-id="Autocorrelação-5.1.2"><span class="toc-item-num">5.1.2&nbsp;&nbsp;</span>Autocorrelação</a></span></li></ul></li><li><span><a href="#Densidade-espectral-de-potência-$\mathcal{S}_{V}(f)$" data-toc-modified-id="Densidade-espectral-de-potência-$\mathcal{S}_{V}(f)$-5.2"><span class="toc-item-num">5.2&nbsp;&nbsp;</span>Densidade espectral de potência $\mathcal{S}_{V}(f)$</a></span></li><li><span><a href="#Exemplos-de-densidade-espectral-de-potência-de-sinais-modulados" data-toc-modified-id="Exemplos-de-densidade-espectral-de-potência-de-sinais-modulados-5.3"><span class="toc-item-num">5.3&nbsp;&nbsp;</span>Exemplos de densidade espectral de potência de sinais modulados</a></span></li></ul></li><li><span><a href="#Gerando-sinais-4-PAM" data-toc-modified-id="Gerando-sinais-4-PAM-6"><span class="toc-item-num">6&nbsp;&nbsp;</span>Gerando sinais 4-PAM</a></span></li><li><span><a href="#Gerando-sinais-QPSK" data-toc-modified-id="Gerando-sinais-QPSK-7"><span class="toc-item-num">7&nbsp;&nbsp;</span>Gerando sinais QPSK</a></span></li><li><span><a href="#Formatação--de-pulso-óptica:-pulsos-retorno-ao-zero-(RZ)" data-toc-modified-id="Formatação--de-pulso-óptica:-pulsos-retorno-ao-zero-(RZ)-8"><span class="toc-item-num">8&nbsp;&nbsp;</span>Formatação  de pulso óptica: pulsos retorno-ao-zero (RZ)</a></span></li><li><span><a href="#Pente-de-frequências-(frequency-comb)" data-toc-modified-id="Pente-de-frequências-(frequency-comb)-9"><span class="toc-item-num">9&nbsp;&nbsp;</span>Pente de frequências (frequency comb)</a></span></li><li><span><a href="#Referências" data-toc-modified-id="Referências-10"><span class="toc-item-num">10&nbsp;&nbsp;</span>Referências</a></span></li></ul></div>
 # -
 
 # # Geração de sinais ópticos
@@ -83,7 +83,7 @@ j = sp.I
 
 E = A*cos(omega_c*t + θ)
 
-disp(Math('E(t) = '+sp.latex(E)))
+symdisp('E(t) = ', E)
 # -
 
 # $E(t)=\operatorname{Re}\left[A e^{j \theta} \exp \left(j \omega_c t\right)\right]$
@@ -91,30 +91,30 @@ disp(Math('E(t) = '+sp.latex(E)))
 # +
 E = sp.re(A*exp(j*θ)*exp(j*omega_c*t)).simplify()
 
-disp(Math('E(t) = '+sp.latex(E)))
+symdisp('E(t) = ', E)
 
 # +
 E = sp.expand_trig(E).cancel()
 
-disp(Math('E(t) = '+sp.latex(E)))
+symdisp('E(t) = ', E)
 
 # +
 print('Portadora:')
-disp(Math('E(t) = '+sp.latex(E)))
+symdisp('E(t) = ', E)
 
 
 print('Representação fasorial polar:')
-disp(Math('\hat{E}(t) = '+sp.latex(A*exp(j*θ))))
+symdisp('\hat{E}(t) = ', A*exp(j*θ))
 
 
 print('Representação fasorial cartesiana:')
 A_I = sp.re(A*exp(j*θ))
 A_Q = sp.im(A*exp(j*θ))
 
-disp(Math('\hat{E}(t) = '+sp.latex(A_I + j*A_Q)))
+symdisp('\hat{E}(t) = ', A_I + j*A_Q)
 
-disp(Math('A_I = '+sp.latex(A_I)))
-disp(Math('A_Q = '+sp.latex(A_Q)))
+symdisp('A_I = ', A_I)
+symdisp('A_Q = ', A_Q)
 
 
 # -
@@ -226,13 +226,13 @@ interact(genConst, M=[2, 4, 8, 16, 64, 256, 1024], constType=['ook','pam','psk',
 
 # +
 print('Portadora:')
-disp(Math('E(t) = '+sp.latex(E)))
+symdisp('E(t) = ', E)
 
 print('Simplificação: θ = 0')
 
 E_ = E.subs({θ:0})
-disp(Math('E(t) = '+sp.latex(E_)))
-disp(Math('\hat{E}(t) = '+sp.latex(A)))
+symdisp('E(t) = ', E)
+symdisp('\hat{E}(t) = ', A)
 # -
 
 ϕ1, ϕ2, ϕ = sp.symbols('ϕ1, ϕ2, ϕ', real=True)
@@ -241,29 +241,28 @@ Ai        = sp.symbols('A_i', real=True)
 # +
 C  = 1/sqrt(2)*Matrix([[1, j],[j, 1]])
 
-disp(Math('C = '+sp.latex(C)))
+symdisp('C = ', C)
 
 # +
 M = Matrix([[exp(j*ϕ1), 0],[0, exp(j*ϕ2)]])
 
-disp(Math('M = '+sp.latex(M)))
+symdisp('M = ', M)
 
 # +
 T = C*M*C
 
-disp(Math('T = '+sp.latex(T)))
+symdisp('T = ', T)
 
 # +
 Ei = Matrix([[Ai],[0]])
 
-disp(Math('\hat{E}_i = '+sp.latex(Ei)))
+symdisp('\hat{E}_i = ', Ei)
 # -
 
 Eo = T*Ei
-disp(Math('\hat{E}_o = '+sp.latex(Eo)))
+symdisp('\hat{E}_o = ', Eo)
 
 Eo[0].subs({ϕ1:ϕ, ϕ2:-ϕ}).simplify()
-
 
 # $$\begin{equation}
 # \frac{\hat{E}_{\text {out }}(t)}{\hat{E}_{\text {in }}(t)}=\frac{1}{2} \left(e^{j \varphi(t)}+e^{-j \varphi(t)}\right)e^{j\frac{\pi}{2}}
@@ -277,65 +276,54 @@ Eo[0].subs({ϕ1:ϕ, ϕ2:-ϕ}).simplify()
 # A_{\text {out}}(t) = A_{i n}(t) \cos \left(\frac{1}{2V_{\pi}}[u(t)+V_b]\pi\right)
 # \end{equation}$$
 
-def mzm(Ai, Vπ, u, Vb):
-    """
-    Modulador MZM
-    
-    :param Vπ: tensão Vπ
-    :param Vb: tensão de bias
-    :param u:  sinal modulante
-    :param Ai: amplitude da portadora CW
-    
-    :return Ao: amplitude da portadora modulada
-    """
-    π  = np.pi
-    Ao = Ai*np.cos(0.5/Vπ*(u+Vb)*π)
-    
-    return Ao
+# +
+from optic.models import mzm
 
+help(mzm)
+# -
 
-# ### Transmitindo informação na intensidade (potência) da portadora óptica
+# ### Transmitindo informação na intensidade (potência) da portadora óptica ($V_b = \pm V_π/2$)
 
 # +
 Vπ = 2
 Vb = -Vπ/2
 
-u = np.arange(-2*Vπ, 2*Vπ, 0.01) # gera valores entre -2Vπ e 2Vπ
+u = np.arange(-2*Vπ, 2*Vπ, 0.25) # gera valores entre -2Vπ e 2Vπ
 
 Ai = 1
-Ao = mzm(Ai, Vπ, u, Vb)
+Ao = mzm(Ai, u, Vπ, Vb)
 
 plt.figure(figsize=(6,4))
-plt.plot(u, Ao, label = 'amplitude $A$', linewidth = 2);
-plt.xlabel('Tensão (V)')
+plt.plot(u, Ao,'-o', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
 plt.xlim(min(u), max(u));
 
-plt.plot(u, np.abs(Ao)**2, label = 'potência $|A|^2$', linewidth = 2);
-plt.xlabel('Tensão (V)')
+plt.plot(u, np.abs(Ao)**2, '-s', markersize = 5, label = 'potência $|A|^2$ da portadora', linewidth = 2);
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
 plt.xlim(min(u), max(u));
 plt.legend()
 plt.grid()
 # -
 
-# ### Transmitindo informação na amplitude do campo elétrico
+# ### Transmitindo informação na amplitude do campo elétrico ($V_b = \pm V_π$)
 
 # +
 Vπ = 2
 Vb = -Vπ
 
-u  = np.arange(-2*Vπ, 2*Vπ, 0.01) # gera valores entre -2Vπ e 2Vπ
+u  = np.arange(-2*Vπ, 2*Vπ, 0.25) # gera valores entre -2Vπ e 2Vπ
 
 Ai = 1
 
-Ao = mzm(Ai, Vπ, u, Vb)
+Ao = mzm(Ai, u, Vπ, Vb)
 
 plt.figure(figsize=(6,4))
-plt.plot(u, Ao, label = 'amplitude $A$', linewidth = 2);
-plt.xlabel('Tensão (V)')
+plt.plot(u, Ao,'-o', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
 plt.xlim(min(u), max(u));
 
-plt.plot(u, np.abs(Ao)**2, label = 'potência $|A|^2$', linewidth = 2);
-plt.xlabel('Tensão (V)')
+plt.plot(u, np.abs(Ao)**2, '-s', markersize = 5, label = 'potência $|A|^2$ da portadora', linewidth = 2);
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
 plt.xlim(min(u), max(u));
 plt.legend()
 plt.grid()
@@ -353,15 +341,15 @@ Vb = 0
 u  = np.arange(-2*Vπ, 2*Vπ, 0.00013) # gera valores entre -2Vπ e 2Vπ
 
 Ai = 1
-Ao = mzm(Ai, Vπ, 0.9*u, Vb)
+Ao = mzm(Ai, 0.9*u, Vπ, Vb)
 
 plt.figure(figsize=(6,4))
-plt.plot(u, Ao, label = 'amplitude $A$', linewidth = 2);
-plt.xlabel('Tensão (V)')
+plt.plot(u, Ao,'-', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
 plt.xlim(min(u), max(u));
 
-plt.plot(u, np.abs(Ao)**2, label = 'potência $|A|^2$', linewidth = 2);
-plt.xlabel('Tensão (V)')
+plt.plot(u, np.abs(Ao)**2, '-', markersize = 5, label = 'potência $|A|^2$ da portadora', linewidth = 2);
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
 plt.xlim(min(u), max(u));
 plt.legend()
 plt.grid()
@@ -370,7 +358,8 @@ P  = 10*np.log((np.abs(Ao)**2 + 0.05))
 
 plt.figure()
 plt.plot(u, P, label = 'potência $|A|^2$', linewidth = 2);
-plt.xlabel('Tensão (V)')
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
+plt.ylabel('dBx')
 plt.xlim(min(u), max(u));
 plt.legend()
 plt.grid()
