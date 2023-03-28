@@ -102,10 +102,8 @@ symdisp('E(t) = ', E)
 print('Portadora:')
 symdisp('E(t) = ', E)
 
-
 print('Representação fasorial polar:')
 symdisp('\hat{E}(t) = ', A*exp(j*θ))
-
 
 print('Representação fasorial cartesiana:')
 A_I = sp.re(A*exp(j*θ))
