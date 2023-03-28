@@ -7,9 +7,9 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.3
+#       jupytext_version: 1.13.8
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -19,10 +19,21 @@ import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import cos, sin, exp, Matrix, sqrt
+from sympy.simplify.fu import TR10, TR9
 import pandas as pd
 
 from IPython.display import display, Math
 from IPython.display import display as disp
+from utils import symdisp, symplot
+import ipywidgets as widgets
+from ipywidgets import interact
+
+from commpy.utilities import upsample
+
+from optic.modulation import modulateGray, demodulateGray, GrayMapping
+from optic.dsp import firFilter, pulseShape, lowPassFIR, pnorm, sincInterp
+from optic.metrics import signal_power
+from optic.plot import eyediagram
 
 # +
 from IPython.core.display import HTML
@@ -129,86 +140,63 @@ disp(Math('A_Q = '+sp.latex(A_Q)))
 
 # ### Diagramas de constelação
 
-# +
-plt.figure(figsize=(4,4))
-plt.plot([],[])
-plt.vlines(0,-1.5,1.5)
-plt.hlines(0,-1.5,1.5)
-plt.grid()
-plt.ylabel('$A_Q$', fontsize=14)
-plt.xlabel('$A_I$', fontsize=14)
-plt.axis('square')
-plt.xlim(-1.5,1.5)
-plt.ylim(-1.5,1.5);
+# + hide_input=true
+# M: order of the modulation format
+# constType: 'qam', 'psk', 'pam' or 'ook'
 
-OOK = np.array([[0,0],[1,0]])
-plt.plot(OOK[:,0], OOK[:,1],'o', markersize=10,);
-plt.title('Constelação OOK');
+def genConst(M, constType, plotBits):
+    try:
+        plt.figure(figsize=(6,6))
+        plt.plot([],[])
+        plt.grid()
+        plt.ylabel('$A_Q$', fontsize=14)
+        plt.xlabel('$A_I$', fontsize=14)
+        plt.axis('square')
 
-# +
-plt.figure(figsize=(4,4))
-plt.plot([],[])
-plt.vlines(0,-1.5,1.5)
-plt.hlines(0,-1.5,1.5)
-plt.grid()
-plt.ylabel('$A_Q$', fontsize=14)
-plt.xlabel('$A_I$', fontsize=14)
-plt.axis('square')
-plt.xlim(-1.5,1.5)
-plt.ylim(-1.5,1.5);
+        # plot modulation bit-to-symbol mapping    
+        constSymb = GrayMapping(M, constType)             # Gray constellation mapping
+        bitMap = demodulateGray(constSymb, M, constType)  # bit mapping
+        bitMap = bitMap.reshape(-1, int(np.log2(M)))
 
-BPSK = np.array([[-1,0],[1,0]])
+        # generate random bits
+        bits = bitMap.reshape(1, -1)
 
-plt.plot(BPSK[:,0], BPSK[:,1],'o', markersize=10,);
-plt.title('Constelação BPSK');
+        # Map bits to constellation symbols
+        symbTx = modulateGray(bits, M, constType)
 
-# +
-plt.figure(figsize=(4,4))
-plt.plot([],[])
-plt.vlines(0,-1.5,1.5)
-plt.hlines(0,-1.5,1.5)
-plt.grid()
-plt.ylabel('$A_Q$', fontsize=14)
-plt.xlabel('$A_I$', fontsize=14)
-plt.axis('square')
-plt.xlim(-1.5,1.5)
-plt.ylim(-1.5,1.5);
+        # normalize symbols energy to 1
+        if constType == 'ook':
+            plt.xlim(-1.25*max(symbTx.real),1.25*max(symbTx.real))
+            plt.ylim(-1.25*max(symbTx.real),1.25*max(symbTx.real));
+            plt.vlines(0, -1.25*max(symbTx.real),1.25*max(symbTx.real))
+            plt.hlines(0, -1.25*max(symbTx.real),1.25*max(symbTx.real))
+        else:
+            plt.xlim(1.25*min(symbTx.real),1.25*max(symbTx.real))
+            plt.ylim(1.25*min(symbTx.real),1.25*max(symbTx.real));
+            plt.vlines(0, 1.25*min(symbTx.real), 1.25*max(symbTx.real))
+            plt.hlines(0, 1.25*min(symbTx.real), 1.25*max(symbTx.real))
+        
+        if M>64:
+            plt.plot(symbTx.real, symbTx.imag,'o', markersize=4);
+        else:
+            plt.plot(symbTx.real, symbTx.imag,'o', markersize=10);                
+      
+        plt.title('Constelação '+str(M)+'-'+constType.upper());
+        
+        if plotBits:
+            if M>=64:
+                fontSize = 6
+            else:
+                fontSize = 12
 
-PAM4 = np.array([[0,0],[1/3,0],[2/3,0],[1,0]])
-plt.plot(PAM4[:,0], PAM4[:,1],'o', markersize=10,);
-plt.title('Constelação PAM4 (4-ASK)');
-
-# +
-plt.figure(figsize=(4,4))
-plt.plot([],[])
-plt.vlines(0,-1.5,1.5)
-plt.hlines(0,-1.5,1.5)
-plt.grid()
-plt.ylabel('$A_Q$', fontsize=14)
-plt.xlabel('$A_I$', fontsize=14)
-plt.axis('square')
-plt.xlim(-1.5,1.5)
-plt.ylim(-1.5,1.5);
-
-PAM4 = np.array([[-1,0],[-1/3,0],[1/3,0],[1,0]])
-plt.plot(PAM4[:,0], PAM4[:,1],'o', markersize=10,);
-plt.title('Constelação PAM4 (4ASK) bipolar');
-
-# +
-plt.figure(figsize=(4,4))
-plt.plot([],[])
-plt.vlines(0,-1.5,1.5)
-plt.hlines(0,-1.5,1.5)
-plt.grid()
-plt.ylabel('$A_Q$', fontsize=14)
-plt.xlabel('$A_I$', fontsize=14)
-plt.axis('square')
-plt.xlim(-1.5,1.5)
-plt.ylim(-1.5,1.5);
-
-QPSK = np.array([[-1,1],[-1,-1],[1,-1],[1,1]])
-plt.plot(QPSK[:,0], QPSK[:,1],'o', markersize=10,);
-plt.title('Constelação QPSK');
+            for ind, symb in enumerate(constSymb):
+                bitMap[ind,:]
+                plt.annotate(str(bitMap[ind,:])[1:-1:2], xy = (symb.real-0.05, symb.imag+0.15), size=fontSize)
+        
+    except:
+        return    
+    
+interact(genConst, M=[2, 4, 8, 16, 64, 256, 1024], constType=['ook','pam','psk','qam'], plotBits=[True, False]);
 # -
 
 # ## Modulador de Mach-Zehnder
