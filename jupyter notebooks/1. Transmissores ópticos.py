@@ -407,8 +407,10 @@ plt.xlim(0, t.max());
 # $$
 #
 
-from commpy.utilities  import signal_power, upsample
-from utils.dsp import firFilter, pulseShape, eyediagram, sincInterp
+from optic.metrics import signal_power
+from optic.dsp import firFilter, pulseShape, sincInterp
+from optic.plot import eyediagram
+from commpy.utilities import upsample
 
 # ### Exemplo 1: função sinc(t)
 
@@ -498,14 +500,9 @@ plt.legend(loc='upper right');
 
 # $$ \begin{align} A(t) &= \left[ \sum_{n} s_{n} \delta \left(t-n T_{s}\right)\right] \ast p(t) \nonumber \\ & = \sum_{n} s_{n} p\left(t-n T_{s}\right)\end{align}$$
 
-# +
 # parâmetros da simulação
-SpS = 32
-
 Rs     = 10e9          # Taxa de símbolos (para o caso do OOK Rs = Rb)
 Ts     = 1/Rs          # Período de símbolo em segundos
-Fa     = 1/(Ts/SpS)    # Frequência de amostragem do sinal (amostras/segundo)
-Ta     = 1/Fa          # Período de amostragem
 
 
 # +
@@ -536,6 +533,43 @@ plt.xticks(np.arange(0, symbTx.size));
 # #### Pulso retangular ideal
 
 # +
+from sympy import fourier_transform as FT
+from sympy import inverse_fourier_transform as iFT
+from sympy import oo as infty
+
+def rect(t, a):
+    return (sp.Heaviside(t + a) - sp.Heaviside(t - a))
+
+t, f = sp.symbols('t, f', real=True)
+Ts = sp.symbols('T_s', real=True, positive=True)
+
+# pulso retangular
+p = rect(t, Ts/2)
+P = FT(p, t, f)
+
+symdisp('p(t) = ', p)
+symdisp('P(f) = ', P)
+
+intervalo_f = np.arange(-4, 4, 0.001)*(Rs/1e9)
+intervalo_t = np.arange(-1, 1, 0.001)*(1/(Rs/1e12))
+
+symplot(t, p.subs({Ts:1/(Rs/1e12)}), intervalo_t, funLabel='p(t)', xlabel=' tempo [ps]');
+plt.title('Domínio do tempo')
+symplot(f, P.subs({Ts:1/(Rs/1e9)}), intervalo_f, funLabel='$|P(f)|$', xlabel= 'frequência [GHz]');
+plt.title('Domínio da frequência')
+symplot(f, 10*sp.log(sp.Abs(P.subs({Ts:1/(Rs/1e9)})), 10), intervalo_f, funLabel='$|P(f)|$', 
+        xlabel= 'frequência [GHz]', ylabel= 'valor absoluto [dB]');
+plt.title('Domínio da frequência em dB')
+plt.ylim(-50, 0);
+
+# +
+# parâmetros da simulação
+SpS = 128           # Amostras por símbolo
+Rs  = 10e9          # Taxa de símbolos (para o caso do OOK Rs = Rb)
+Ts  = 1/Rs          # Período de símbolo em segundos
+Fa  = 1/(Ts/SpS)    # Frequência de amostragem do sinal (amostras/segundo)
+Ta  = 1/Fa          # Período de amostragem
+
 # upsampling
 symbolsUp = upsample(symbTx, SpS)
 
@@ -546,7 +580,7 @@ pulse = pulse/max(abs(pulse))
 t = (0.5+np.arange(0, pulse.size))*(Ta/1e-12) # tempo em ps
 
 plt.figure(1)
-plt.plot(t, pulse,'-o', label = 'p(t)', linewidth=3)
+plt.plot(t, pulse,'-', label = 'p(t)', linewidth=3)
 plt.xlabel('tempo [ps]')
 plt.ylabel('amplitude')
 plt.xlim(min(t), max(t))
