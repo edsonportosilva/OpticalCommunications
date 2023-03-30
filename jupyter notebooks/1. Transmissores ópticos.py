@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -144,7 +144,7 @@ symdisp('A_Q = ', A_Q)
 
 def genConst(M, constType, plotBits):
     try:
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(5,5))
         plt.plot([],[])
         plt.grid()
         plt.ylabel('$A_Q$', fontsize=14)
