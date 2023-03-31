@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.14.5
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -144,7 +144,7 @@ symdisp('A_Q = ', A_Q)
 
 def genConst(M, constType, plotBits):
     try:
-        plt.figure(figsize=(5,5))
+        plt.figure(figsize=(6,6))
         plt.plot([],[])
         plt.grid()
         plt.ylabel('$A_Q$', fontsize=14)
@@ -291,14 +291,19 @@ u = np.arange(-2*Vπ, 2*Vπ, 0.25) # gera valores entre -2Vπ e 2Vπ
 Ai = 1
 Ao = mzm(Ai, u, Vπ, Vb)
 
-plt.figure(figsize=(6,4))
-plt.plot(u, Ao,'-o', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
-plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
-plt.xlim(min(u), max(u));
 
-plt.plot(u, np.abs(Ao)**2, '-s', markersize = 5, label = 'potência $|A|^2$ da portadora', linewidth = 2);
+plt.figure(figsize=(6,4))
+plt.plot(u+Vb, Ao,'-o', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
 plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
-plt.xlim(min(u), max(u));
+plt.xlim(min(u+Vb), max(u+Vb));
+
+plt.plot(u+Vb, np.abs(Ao)**2, '-s', markersize = 5, label = 'potência $|A|^2$ da portadora', linewidth = 2);
+plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
+plt.xlim(min(u+Vb), max(u+Vb));
+
+# plota ponto de operação
+Aop = mzm(Ai, 0, Vπ, Vb)
+plt.plot(Vb, np.abs(Aop)**2,'ko', markersize = 6, label = 'ponto de operação', linewidth = 2);
 plt.legend()
 plt.grid()
 # -
@@ -312,17 +317,20 @@ Vb = -Vπ
 u  = np.arange(-2*Vπ, 2*Vπ, 0.25) # gera valores entre -2Vπ e 2Vπ
 
 Ai = 1
-
 Ao = mzm(Ai, u, Vπ, Vb)
 
 plt.figure(figsize=(6,4))
-plt.plot(u, Ao,'-o', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
+plt.plot(u+Vb, Ao,'-o', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
 plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
-plt.xlim(min(u), max(u));
+plt.xlim(min(u+Vb), max(u+Vb));
 
-plt.plot(u, np.abs(Ao)**2, '-s', markersize = 5, label = 'potência $|A|^2$ da portadora', linewidth = 2);
+plt.plot(u+Vb, np.abs(Ao)**2, '-s', markersize = 5, label = 'potência $|A|^2$ da portadora', linewidth = 2);
 plt.xlabel('Amplitude do sinal modulante na entrada do MZM (V)')
-plt.xlim(min(u), max(u));
+plt.xlim(min(u+Vb), max(u+Vb));
+
+# plota ponto de operação
+Aop = mzm(Ai, 0, Vπ, Vb)
+plt.plot(Vb, Aop,'ko', markersize = 6, label = 'ponto de operação', linewidth = 2);
 plt.legend()
 plt.grid()
 # -
@@ -335,11 +343,10 @@ plt.grid()
 # parâmetros do MZM
 Vπ = 2
 Vb = 0
-
 u  = np.arange(-2*Vπ, 2*Vπ, 0.00013) # gera valores entre -2Vπ e 2Vπ
 
 Ai = 1
-Ao = mzm(Ai, 0.9*u, Vπ, Vb)
+Ao = mzm(Ai, 0.9*u, Vπ, Vb) # gera a curva de resposta o MZM
 
 plt.figure(figsize=(6,4))
 plt.plot(u, Ao,'-', markersize = 5, label = 'amplitude $A$ da portadora', linewidth = 2);
@@ -616,7 +623,7 @@ P0 = 100e-3 # potência da portadora CW na entrada no MZM
 Vπ = 2 
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
-sigTxo = mzm(Ai, Vπ, sigTx, Vb)
+sigTxo = mzm(Ai, sigTx, Vπ, Vb)
 
 # plota sinal 
 t = np.arange(0, sigTxo.size)*(Ta/1e-12)
