@@ -1223,7 +1223,7 @@ disp(Math('E(t) = '+sp.latex(E)))
 disp(Math('\hat{E}(t) = '+sp.latex(AI+j*AQ)))
 
 # + [markdown] hide_input=true
-# <img src="./figuras/IQM.png" width="600">
+# <img src="./figuras/IQM.png" width="900">
 
 # + hide_input=false
 # gera sequência de bits pseudo-aleatórios
