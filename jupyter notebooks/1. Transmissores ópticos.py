@@ -539,7 +539,7 @@ plt.xticks(np.arange(0, symbTx.size));
 #
 # #### Pulso retangular ideal
 
-# +
+# + hide_input=true
 from sympy import fourier_transform as FT
 from sympy import inverse_fourier_transform as iFT
 from sympy import oo as infty
@@ -642,6 +642,11 @@ plt.xlim(0, max(t));
 # #### Pulso NRZ típico
 
 # +
+# parâmetros da simulação
+SpS = 32           # Amostras por símbolo
+Fa  = 1/(Ts/SpS)    # Frequência de amostragem do sinal (amostras/segundo)
+Ta  = 1/Fa          # Período de amostragem
+
 # pulso NRZ típico
 pulse = pulseShape('nrz', SpS)
 pulse = pulse/max(abs(pulse))
@@ -687,7 +692,7 @@ P0 = 100e-3 # potência da portadora CW na entrada no MZM
 Vπ = 2 
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
-sigTxo = mzm(Ai, Vπ, sigTx, Vb)
+sigTxo = mzm(Ai, sigTx, Vπ, Vb)
 
 # plota sinal 
 t = np.arange(0, sigTxo.size)*(Ta/1e-12)
@@ -755,7 +760,6 @@ t = np.arange(0, sigTx.size)*(Ta/1e-12)
 symbolsUp = upsample(2*bits-1, SpS)
 symbolsUp[symbolsUp==0] = np.nan
 
-
 plt.figure(2)
 plt.plot(t, sigTx,'-', linewidth=3)
 plt.plot(t, symbolsUp.real,'o')
@@ -773,7 +777,7 @@ P0 = 100e-3 # potência da portadora CW na entrada no MZM
 Vπ = 2 
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
-sigTxo = mzm(Ai, Vπ, sigTx, Vb)
+sigTxo = mzm(Ai, sigTx, Vπ, Vb)
 
 # plota sinal 
 t = np.arange(0, sigTxo.size)*(Ta/1e-12)
@@ -786,6 +790,8 @@ plt.title('$\sqrt{P_0}\;\sum_{n}\;\;b_{n}p(t-n T_s)$')
 plt.grid()
 
 t = (0.5 + np.arange(0, bits.size))*(Ts/1e-12)
+plt.xlim(0, max(t));
+plt.vlines(t, 0, P0, linestyles='dashed', color = 'k');
 plt.xlim(0, max(t));
 # -
 
@@ -1026,7 +1032,7 @@ Vπ = 2
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
 
-sigTxo = mzm(Ai, Vπ, 0.25*sigTx, Vb)
+sigTxo = mzm(Ai, 0.25*sigTx, Vπ, Vb)
 
 # plota psd
 plt.figure();
@@ -1045,7 +1051,7 @@ eyediagram(np.abs(sigTxo)**2, Nsamples, SpS)
 
 # ## Gerando sinais 4-PAM
 
-# +
+# + hide_input=true
 plt.figure(figsize=(4,4))
 plt.plot([],[])
 plt.vlines(0,-1.5,1.5)
@@ -1118,7 +1124,7 @@ P0 = 100e-3 # potência da portadora CW na entrada no MZM
 Vπ = 2 
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
-sigTxo = mzm(Ai, Vπ, sigTx, Vb)
+sigTxo = mzm(Ai, sigTx, Vπ, Vb)
 
 # plota sinal 
 t = np.arange(0, sigTxo.size)*(Ta/1e-12)
@@ -1131,6 +1137,8 @@ plt.title('$\sqrt{P_0}\;\sum_{n}\;a_{n}\;p(t-n T_s)$')
 plt.grid()
 
 t = (0.5 + np.arange(0, symbTx.size))*(Ts/1e-12)
+plt.xlim(0, max(t));
+plt.vlines(t, 0, P0, linestyles='dashed', color = 'k');
 plt.xlim(0, max(t));
 
 # +
@@ -1159,7 +1167,7 @@ P0 = 100e-3 # potência da portadora CW na entrada no MZM
 Vπ = 2 
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
-sigTxo = mzm(Ai, Vπ, sigTx, Vb)
+sigTxo = mzm(Ai, sigTx, Vπ, Vb)
 
 Nsamples = 20000
 
@@ -1180,15 +1188,15 @@ plt.legend(loc='upper left');
 
 # +
 # diagrama de olho
-eyediagram(sigTx, Nsamples, SpS, plotlabel='elétrico')
+eyediagram(sigTx, sigTxo.size-SpS, SpS, plotlabel='elétrico')
 
 # diagrama de olho
-eyediagram(np.abs(sigTxo)**2, Nsamples, SpS, plotlabel='óptico')
+eyediagram(np.abs(sigTxo)**2, sigTxo.size-SpS, SpS, plotlabel='óptico')
 # -
 # ## Gerando sinais QPSK
 
 
-# +
+# + hide_input=true
 plt.figure(figsize=(4,4))
 plt.plot([],[])
 plt.vlines(0,-1.5,1.5)
@@ -1204,7 +1212,7 @@ QPSK = np.array([[-1,1],[-1,-1],[1,-1],[1,1]])
 plt.plot(QPSK[:,0], QPSK[:,1],'o', markersize=10,);
 plt.title('Constelação QPSK');
 
-# +
+# + hide_input=true
 AI, AQ, t = sp.symbols('A_I, A_Q, t', real=True)
 
 E = AI*cos(omega_c*t) + AQ*sin(omega_c*t)
@@ -1213,14 +1221,14 @@ print('Portadora:')
 disp(Math('E(t) = '+sp.latex(E)))
 
 disp(Math('\hat{E}(t) = '+sp.latex(AI+j*AQ)))
-# -
 
+# + [markdown] hide_input=true
 # <img src="./figuras/IQM.png" width="600">
 
-# +
+# + hide_input=false
 # gera sequência de bits pseudo-aleatórios
-bitsI   = np.random.randint(2, size=10000)  
-bitsQ   = np.random.randint(2, size=10000) 
+bitsI   = np.random.randint(2, size=50000)  
+bitsQ   = np.random.randint(2, size=50000) 
 
 n  = np.arange(0, bits.size)
 
@@ -1255,8 +1263,8 @@ Vπ = 2
 Vb = -Vπ
 Ai = np.sqrt(P0)
 
-sigTxo_I = mzm(Ai, Vπ, sigTx.real, Vb)
-sigTxo_Q = mzm(Ai, Vπ, sigTx.imag, Vb)
+sigTxo_I = mzm(Ai, sigTx.real, Vπ, Vb)
+sigTxo_Q = mzm(Ai, sigTx.imag, Vπ, Vb)
 
 sigTxo = sigTxo_I + 1j*sigTxo_Q
 
@@ -1268,15 +1276,14 @@ plt.xlim(-4*Rs,4*Rs);
 plt.ylim(-250,-50);
 
 # +
-Nsamples = 10000
-
 plt.figure(figsize=(3,3))
-plt.plot(sigTxo.real,sigTxo.imag)
+plt.plot(sigTxo.real,sigTxo.imag,'k--', linewidth=1)
+plt.plot(np.sqrt(P0/2)*QPSK[:,0], np.sqrt(P0/2)*QPSK[:,1],'o', markersize=10);
 plt.grid()
 plt.axis('equal');
 
 # diagrama de olho
-eyediagram(np.abs(sigTxo)**2, Nsamples, SpS)
+eyediagram(np.abs(sigTxo)**2, sigTxo.size-SpS, SpS, ptype='fancy')
 # -
 
 # ## Formatação  de pulso óptica: pulsos retorno-ao-zero (RZ)
@@ -1324,14 +1331,14 @@ elif RZ == 67:
 senoideRF = Vs*np.cos(2*np.pi*fs*t + ϕs)
 
 # MZM utilizado como formatador de pulso (pulse carver)
-sigTxo_   = mzm(sigTxo, Vπ, senoideRF, Vb)
+sigTxo_   = mzm(sigTxo, senoideRF, Vπ, Vb)
 
 Nsamples = 10000
 
 # diagramas de olho
-eyediagram(np.abs(sigTxo)**2, Nsamples, SpS, plotlabel='NRZ QPSK')
-eyediagram(np.abs(mzm(Ai, Vπ, senoideRF, Vb))**2, Nsamples, SpS, plotlabel='pulsos RZ '+str(RZ)+'%')
-eyediagram(np.abs(sigTxo_)**2, Nsamples, SpS, plotlabel='RZ '+str(RZ)+'% QPSK')
+eyediagram(np.abs(sigTxo)**2,sigTxo.size-SpS, SpS, plotlabel='NRZ QPSK', ptype='fancy')
+eyediagram(np.abs(mzm(Ai, senoideRF,  Vπ, Vb))**2, sigTxo.size-SpS, SpS, plotlabel='pulsos RZ '+str(RZ)+'%', ptype='fancy')
+eyediagram(np.abs(sigTxo_)**2, sigTxo.size-SpS, SpS, plotlabel='RZ '+str(RZ)+'% QPSK', ptype='fancy')
 
 # plota psd
 plt.figure();
@@ -1343,12 +1350,14 @@ plt.legend(loc='upper left');
 
 # +
 plt.figure(figsize=(4,4))
-plt.plot(sigTxo.real,sigTxo.imag)
+plt.plot(sigTxo.real,sigTxo.imag,'k--', linewidth=1)
+plt.plot(np.sqrt(P0/2)*QPSK[:,0], np.sqrt(P0/2)*QPSK[:,1],'o', markersize=10);
 plt.grid()
 plt.axis('equal');
 
 plt.figure(figsize=(4,4))
-plt.plot(sigTxo_.real,sigTxo_.imag)
+plt.plot(sigTxo_.real,sigTxo_.imag,'k--', linewidth=1)
+plt.plot(np.sqrt(P0/2)*QPSK[:,0], np.sqrt(P0/2)*QPSK[:,1],'o', markersize=10);
 plt.grid()
 plt.axis('equal');
 # -
@@ -1364,7 +1373,7 @@ Ai = 1
 
 senoideRF = 2*Vπ/2*np.cos(2*np.pi*Rs*t + np.pi)
 
-sigTxo_   = mzm(Ai, Vπ, senoideRF, Vb)
+sigTxo_   = mzm(Ai, senoideRF, Vπ, Vb)
 #sigTxo_   = mzm(sigTxo_, Vπ, 5*senoideRF, Vb)
 
 # plota psd
