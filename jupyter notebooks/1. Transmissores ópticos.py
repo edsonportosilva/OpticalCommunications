@@ -1388,8 +1388,8 @@ plt.grid()
 plt.axis('equal');
 
 # diagrama de olho
-eyediagram(sigTxo, sigTxo.size-SpS, SpS, ptype='fancy')
-eyediagram(np.abs(sigTxo)**2, sigTxo.size-SpS, SpS, ptype='fancy')
+eyediagram(sigTxo, sigTxo.size-SpS, SpS, ptype='fast')
+eyediagram(np.abs(sigTxo)**2, sigTxo.size-SpS, SpS, ptype='fast')
 # -
 
 # ## Formatação  de pulso óptica: pulsos retorno-ao-zero (RZ)
@@ -1442,9 +1442,9 @@ sigTxo_   = mzm(sigTxo, senoideRF, Vπ, Vb)
 Nsamples = 10000
 
 # diagramas de olho
-eyediagram(np.abs(sigTxo)**2,sigTxo.size-SpS, SpS, plotlabel='NRZ QPSK', ptype='fancy')
-eyediagram(np.abs(mzm(Ai, senoideRF,  Vπ, Vb))**2, sigTxo.size-SpS, SpS, plotlabel='pulsos RZ '+str(RZ)+'%', ptype='fancy')
-eyediagram(np.abs(sigTxo_)**2, sigTxo.size-SpS, SpS, plotlabel='RZ '+str(RZ)+'% QPSK', ptype='fancy')
+eyediagram(np.abs(sigTxo)**2,sigTxo.size-SpS, SpS, plotlabel='NRZ', ptype='fast')
+eyediagram(np.abs(mzm(Ai, senoideRF,  Vπ, Vb))**2, sigTxo.size-SpS, SpS, plotlabel='pulsos RZ '+str(RZ)+'%', ptype='fast')
+eyediagram(np.abs(sigTxo_)**2, sigTxo.size-SpS, SpS, plotlabel='RZ '+str(RZ)+'%', ptype='fast')
 
 # plota psd
 plt.figure();
