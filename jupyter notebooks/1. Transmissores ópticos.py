@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -144,7 +144,7 @@ symdisp('A_Q = ', A_Q)
 
 def genConst(M, constType, plotBits):
     try:
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(4,4))
         plt.plot([],[])
         plt.grid()
         plt.ylabel('$A_Q$', fontsize=14)
@@ -521,14 +521,14 @@ n      = np.arange(0, bits.size)
 symbTx = 2*bits-1
 
 plt.figure(1)
-plt.stem(bits, basefmt=" ", use_line_collection=True)
+plt.stem(bits, basefmt=" ")
 plt.xlabel('n')
 plt.ylabel('$b_n$')
 plt.grid()
 plt.xticks(np.arange(0, bits.size));
 
 plt.figure(2)
-plt.stem(symbTx, basefmt=" ", use_line_collection=True)
+plt.stem(symbTx, basefmt=" ")
 plt.xlabel('n')
 plt.ylabel('$s_n$')
 plt.grid()
@@ -1057,7 +1057,7 @@ def genConst(M, plotBits):
     constType='pam'
     
     try:
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(4,4))
         plt.plot([],[])
         plt.grid()
         plt.ylabel('$A_Q$', fontsize=14)
@@ -1126,17 +1126,16 @@ bitsTx = np.random.randint(2, size = int(20*np.log2(M)))
 symbTx = modulateGray(bitsTx, M, constType)    
 symbTx = pnorm(symbTx) # power normalization
 
-plt.stem(symbTx, basefmt=" ", use_line_collection=True, label ='símbolos 4-PAM')
+plt.stem(symbTx, basefmt=" ", label ='símbolos 4-PAM')
 plt.xlabel('n')
 plt.ylabel('$s_n$')
 plt.grid()
 plt.legend(loc='upper right')
 plt.xticks(np.arange(0, symbTx.size));
 
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 2000)
-pd.options.display.float_format = '{:,d}'.format
-df = pd.DataFrame({'bits a': bits_a, 'bits b': bits_b})
+df = pd.DataFrame()
+for b in range(int(np.log2(M))):
+    df['bits '+str(b)] = bitsTx[b::int(np.log2(M))]
 
 display(df.T)
 
@@ -1261,7 +1260,7 @@ eyediagram(np.abs(sigTxo)**2, sigTxo.size-SpS, SpS, plotlabel='óptico')
 # + hide_input=true
 def genConst(M, constType, plotBits):
     try:
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(4,4))
         plt.plot([],[])
         plt.grid()
         plt.ylabel('$A_Q$', fontsize=14)
