@@ -1027,12 +1027,11 @@ plt.legend(loc='upper left');
 
 # +
 P0 = 100e-3 # potência da portadora CW na entrada no MZM
-
 Vπ = 2 
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
 
-sigTxo = mzm(Ai, sigTx, Vπ, Vb)
+sigTxo = mzm(Ai, (Vπ/2)*sigTx, Vπ, Vb)
 
 # plota psd
 plt.figure();
@@ -1179,7 +1178,7 @@ Vπ = 2
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
 
-sigTxo = mzm(Ai, sigTx, Vπ, Vb)
+sigTxo = mzm(Ai, (Vπ/2)*sigTx, Vπ, Vb)
 
 # plota sinal 
 t = np.arange(0, sigTxo.size)*(Ta/1e-12)
@@ -1230,7 +1229,7 @@ P0 = 100e-3 # potência da portadora CW na entrada no MZM
 Vπ = 2 
 Vb = -Vπ/2
 Ai = np.sqrt(P0)
-sigTxo = mzm(Ai, sigTx, Vπ, Vb)
+sigTxo = mzm(Ai, (Vπ/2)*sigTx, Vπ, Vb)
 
 Nsamples = 20000
 
@@ -1334,7 +1333,7 @@ help(iqm)
 
 # + hide_input=false
 # parâmetros da simulação
-M = 4               # ordem da modulação
+M = 16               # ordem da modulação
 constType = 'qam'   # tipo de modulação
 SpS = 16            # Amostras por símbolo
 Rs  = 10e9          # Taxa de símbolos
@@ -1343,11 +1342,11 @@ Fa  = 1/(Ts/SpS)    # Frequência de amostragem do sinal (amostras/segundo)
 Ta  = 1/Fa          # Período de amostragem
 
 # generate pseudo-random bit sequence
-bitsTx = np.random.randint(2, size = int(10e4*np.log2(M)))
+bitsTx = np.random.randint(2, size = int(20e4*np.log2(M)))
 
 # generate ook modulated symbol sequence
-symbTx = modulateGray(bitsTx, M, constType)    
-symbTx = pnorm(symbTx) # power normalization
+symbTx = modulateGray(bitsTx, M, constType)
+symbTx = symbTx/np.max(np.abs(symbTx.real)) # ajusta amplitudes do sinal para variar entre -1 e 1
 
 # upsampling
 symbolsUp = upsample(symbTx, SpS)
@@ -1372,8 +1371,7 @@ plt.ylim(-250,-50);
 Vπ = 2 
 Vb = -Vπ
 Ai = np.sqrt(P0)
-
-sigTxo = iqm(Ai, sigTx, Vπ, Vb, Vb)
+sigTxo = iqm(Ai, 0.1*Vπ*sigTx, Vπ, Vb, Vb)
 
 # plota psd
 plt.figure();
@@ -1383,13 +1381,14 @@ plt.xlim(-4*Rs,4*Rs);
 plt.ylim(-250,-50);
 
 # +
-plt.figure(figsize=(3,3))
-plt.plot(sigTxo.real,sigTxo.imag,'k--', linewidth=1)
-plt.plot(np.sqrt(P0/2)*symbTx.real, np.sqrt(P0/2)*symbTx.imag,'o', markersize=10);
+plt.figure(figsize=(4,4))
+plt.plot(sigTxo.real,sigTxo.imag,'k--', linewidth=0.5)
+plt.plot(np.sqrt(signal_power(sigTxo))*symbTx.real, np.sqrt(signal_power(sigTxo))*symbTx.imag,'o', markersize=10);
 plt.grid()
 plt.axis('equal');
 
 # diagrama de olho
+eyediagram(sigTxo, sigTxo.size-SpS, SpS, ptype='fancy')
 eyediagram(np.abs(sigTxo)**2, sigTxo.size-SpS, SpS, ptype='fancy')
 # -
 
@@ -1457,14 +1456,14 @@ plt.legend(loc='upper left');
 
 # +
 plt.figure(figsize=(4,4))
-plt.plot(sigTxo.real,sigTxo.imag,'k--', linewidth=1)
-plt.plot(np.sqrt(P0/2)*QPSK[:,0], np.sqrt(P0/2)*QPSK[:,1],'o', markersize=10);
+plt.plot(sigTxo.real,sigTxo.imag,'k--', linewidth=0.5)
+plt.plot(np.sqrt(signal_power(sigTxo))*symbTx.real, np.sqrt(signal_power(sigTxo))*symbTx.imag,'o', markersize=10);
 plt.grid()
 plt.axis('equal');
 
 plt.figure(figsize=(4,4))
-plt.plot(sigTxo_.real,sigTxo_.imag,'k--', linewidth=1)
-plt.plot(np.sqrt(P0/2)*QPSK[:,0], np.sqrt(P0/2)*QPSK[:,1],'o', markersize=10);
+plt.plot(sigTxo_.real,sigTxo_.imag,'k--', linewidth=0.5)
+plt.plot(np.sqrt(signal_power(sigTxo))*symbTx.real, np.sqrt(signal_power(sigTxo))*symbTx.imag,'o', markersize=10);
 plt.grid()
 plt.axis('equal');
 # -
