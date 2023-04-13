@@ -436,20 +436,11 @@ plt.legend(loc='upper left');
 
 # +
 # parâmetros do receptor
-Tc = 25      # temperatura em Celsius
-B  = 10e9    # banda do receptor em Hz
-R  = 0.85    # responsividade em A/W
-Id = 5e-9    # corrente de escuro em nA
-RL = 50      # RL em Ohms
-
-paramPD = parameters()
-paramPD.R = R         # responsividade em A/W
-paramPD.Tc = Tc       # temperatura em Celsius
-paramPD.Id = Id       # corrente de escuro em A
-paramPD.RL = RL       # RL em Ohms
-paramPD.B = 50e9      # Largura de banda Hz
-paramPD.Fs = Fa 
-paramPD.ideal = False
+Tc = 25    # temperatura em Celsius
+B  = 10e9  # banda do receptor em Hz
+R  = 0.85  # responsividade em A/W
+Id = 5e-9  # corrente de escuro em nA
+RL = 50    # RL em Ohms
         
 Pin = (np.abs(sigTxo)**2).mean() # Potência óptica média média recebida
 
@@ -467,8 +458,16 @@ T = Tc + 273.15     # temperatura em Kelvin
 Is = normal(0, np.sqrt(Fa*(σ2_s/(2*B))), Ip.size)
 It = normal(0, np.sqrt(Fa*(σ2_T/(2*B))), Ip.size)  
 
-# detecta o sinal com o fotodiodo pin
-I = photodiode(sigTxo, paramPD)
+# detecta o sinal com o fotodiodo pin (modelo implementado no OptiCommPy)
+paramPD = parameters()
+paramPD.R = R         # responsividade em A/W
+paramPD.Tc = Tc       # temperatura em Celsius
+paramPD.Id = Id       # corrente de escuro em A
+paramPD.RL = RL       # RL em Ohms
+paramPD.B = B         # Largura de banda Hz
+paramPD.Fs = Fa 
+paramPD.ideal = False
+I_Rx = photodiode(sigTxo, paramPD)
 
 # filtragem Rx
 N = 8001
@@ -483,13 +482,10 @@ plt.ylim(-40,4);
 plt.title('Resposta em frequência do receptor $H(f)$')
 plt.grid();
 
-I_Rx  = firFilter(h, I)
-
 # plota psds
 plt.figure();
 plt.xlim(-3*Rs,3*Rs);
 plt.ylim(-280,-150);
-plt.psd(I, Fs=Fa, NFFT = 16*1024, sides='twosided', label = 'PSD $I(t)$')
 plt.psd(Is, Fs=Fa, NFFT = 16*1024, sides='twosided', label = 'PSD $I_s(t)$')
 plt.psd(It, Fs=Fa, NFFT = 16*1024, sides='twosided', label = 'PSD $I_t(t)$')
 plt.psd(I_Rx, Fs=Fa, NFFT = 16*1024, sides='twosided', label = 'PSD $I_{Rx}(t)$')
@@ -923,12 +919,11 @@ Ip_Rx  = firFilter(h, Ip)
 Is_Rx  = firFilter(h, Is)
 It_Rx  = firFilter(h, It)
 
-# gera sinal para visualizaçã do diagrama de olho
+# gera sinal para visualização do diagrama de olho
 I_eye = I_Rx[100*SpS:I_Rx.size-100*SpS]
 
-Nsamples = 10000
-eyediagram(Ip/np.std(Ip),  Nsamples, SpS)
-eyediagram(I_eye/np.std(I_eye), Nsamples, SpS)
+eyediagram(Ip/np.std(Ip),  Ip.size-SpS, SpS, ptype='fancy')
+eyediagram(I_eye/np.std(I_eye), I_eye.size-SpS, SpS, ptype='fancy')
 
 # SNR estimada numericamente na simulação
 SNR_est = np.var(Ip_Rx)/(np.var(Is_Rx) + np.var(It_Rx))
