@@ -19,9 +19,10 @@ import numpy as np
 import scipy as sp
 from numpy.random import normal
 from scipy import constants
-from commpy.utilities  import signal_power, upsample
-from utils.dsp import firFilter, pulseShape, eyediagram, lowPassFIR
-from utils.models import mzm
+from commpy.utilities import signal_power, upsample
+from optic.dsp import firFilter, pulseShape, lowPassFIR
+from optic.models import mzm, photodiode
+from optic.plot import eyediagram
 from numpy.fft import fft, ifft, fftshift, fftfreq
 
 # +
@@ -44,15 +45,14 @@ figsize(10, 3)
 
 # # Comunicações Ópticas
 
-# # Detecção de sinais ópticos e ruído
+# # Receptores ópticos e ruído
 
 # + [markdown] toc=true
 # <h1>Table of Contents<span class="tocSkip"></span></h1>
-# <div class="toc"><ul class="toc-item"><li><span><a href="#Fontes-de-ruído-em-receptores-ópticos" data-toc-modified-id="Fontes-de-ruído-em-receptores-ópticos-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Fontes de ruído em receptores ópticos</a></span><ul class="toc-item"><li><span><a href="#Ruído-de-disparo-(ou-ruído-balístico)" data-toc-modified-id="Ruído-de-disparo-(ou-ruído-balístico)-1.1"><span class="toc-item-num">1.1&nbsp;&nbsp;</span>Ruído de disparo (ou ruído balístico)</a></span></li><li><span><a href="#Potência-do-ruído-de-disparo" data-toc-modified-id="Potência-do-ruído-de-disparo-1.2"><span class="toc-item-num">1.2&nbsp;&nbsp;</span>Potência do ruído de disparo</a></span><ul class="toc-item"><li><span><a href="#Calculando-a-potência-de-um-sinal" data-toc-modified-id="Calculando-a-potência-de-um-sinal-1.2.1"><span class="toc-item-num">1.2.1&nbsp;&nbsp;</span>Calculando a potência de um sinal</a></span></li></ul></li><li><span><a href="#Ruído-térmico" data-toc-modified-id="Ruído-térmico-1.3"><span class="toc-item-num">1.3&nbsp;&nbsp;</span>Ruído térmico</a></span></li><li><span><a href="#Potência-de-ruído-térmico" data-toc-modified-id="Potência-de-ruído-térmico-1.4"><span class="toc-item-num">1.4&nbsp;&nbsp;</span>Potência de ruído térmico</a></span></li><li><span><a href="#Razão-sinal-ruído-(signal-to-noise-ratio---SNR)" data-toc-modified-id="Razão-sinal-ruído-(signal-to-noise-ratio---SNR)-1.5"><span class="toc-item-num">1.5&nbsp;&nbsp;</span>Razão sinal-ruído (<em>signal-to-noise ratio</em> - SNR)</a></span></li><li><span><a href="#Receptores-p-i-n" data-toc-modified-id="Receptores-p-i-n-1.6"><span class="toc-item-num">1.6&nbsp;&nbsp;</span>Receptores p-i-n</a></span><ul class="toc-item"><li><span><a href="#Limite-de-ruído-térmico-$(\sigma_{T}^{2}-\gg-\sigma_{s}^{2})$" data-toc-modified-id="Limite-de-ruído-térmico-$(\sigma_{T}^{2}-\gg-\sigma_{s}^{2})$-1.6.1"><span class="toc-item-num">1.6.1&nbsp;&nbsp;</span>Limite de ruído térmico $(\sigma_{T}^{2} \gg \sigma_{s}^{2})$</a></span></li><li><span><a href="#Limite-de-ruído-de-disparo-$(\sigma_{s}^{2}-\gg-\sigma_{T}^{2})$" data-toc-modified-id="Limite-de-ruído-de-disparo-$(\sigma_{s}^{2}-\gg-\sigma_{T}^{2})$-1.6.2"><span class="toc-item-num">1.6.2&nbsp;&nbsp;</span>Limite de ruído de disparo $(\sigma_{s}^{2} \gg \sigma_{T}^{2})$</a></span></li><li><span><a href="#Parâmetros-típicos" data-toc-modified-id="Parâmetros-típicos-1.6.3"><span class="toc-item-num">1.6.3&nbsp;&nbsp;</span>Parâmetros típicos</a></span></li></ul></li><li><span><a href="#Simulando-o-transmissor-10G-OOK" data-toc-modified-id="Simulando-o-transmissor-10G-OOK-1.7"><span class="toc-item-num">1.7&nbsp;&nbsp;</span>Simulando o transmissor 10G OOK</a></span></li><li><span><a href="#Simulando-as-fontes-de-ruído-do-receptor-p-i-n" data-toc-modified-id="Simulando-as-fontes-de-ruído-do-receptor-p-i-n-1.8"><span class="toc-item-num">1.8&nbsp;&nbsp;</span>Simulando as fontes de ruído do receptor p-i-n</a></span></li><li><span><a href="#Receptores-baseados-em-APDs" data-toc-modified-id="Receptores-baseados-em-APDs-1.9"><span class="toc-item-num">1.9&nbsp;&nbsp;</span>Receptores baseados em APDs</a></span><ul class="toc-item"><li><span><a href="#Ruído-de-disparo" data-toc-modified-id="Ruído-de-disparo-1.9.1"><span class="toc-item-num">1.9.1&nbsp;&nbsp;</span>Ruído de disparo</a></span></li></ul></li></ul></li><li><span><a href="#Sensitividade-de-receptores" data-toc-modified-id="Sensitividade-de-receptores-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Sensitividade de receptores</a></span><ul class="toc-item"><li><span><a href="#Canal-AWGN-(Additive-White-Gaussian-Noise-Channel)" data-toc-modified-id="Canal-AWGN-(Additive-White-Gaussian-Noise-Channel)-2.1"><span class="toc-item-num">2.1&nbsp;&nbsp;</span>Canal AWGN (<em>Additive White Gaussian Noise Channel</em>)</a></span></li><li><span><a href="#Filtragem-no-receptor" data-toc-modified-id="Filtragem-no-receptor-2.2"><span class="toc-item-num">2.2&nbsp;&nbsp;</span>Filtragem no receptor</a></span></li><li><span><a href="#Filtro-casado" data-toc-modified-id="Filtro-casado-2.3"><span class="toc-item-num">2.3&nbsp;&nbsp;</span>Filtro casado</a></span></li><li><span><a href="#Decisor-ótimo:-avaliando-probabilidades" data-toc-modified-id="Decisor-ótimo:-avaliando-probabilidades-2.4"><span class="toc-item-num">2.4&nbsp;&nbsp;</span>Decisor ótimo: avaliando probabilidades</a></span><ul class="toc-item"><li><span><a href="#Métrica-de-probabilidades-a-posteriori-(MP)" data-toc-modified-id="Métrica-de-probabilidades-a-posteriori-(MP)-2.4.1"><span class="toc-item-num">2.4.1&nbsp;&nbsp;</span>Métrica de <em>probabilidades a posteriori</em> (MP)</a></span></li><li><span><a href="#Limiar-de-decisão-ótimo-$I_d$" data-toc-modified-id="Limiar-de-decisão-ótimo-$I_d$-2.4.2"><span class="toc-item-num">2.4.2&nbsp;&nbsp;</span>Limiar de decisão ótimo $I_d$</a></span></li></ul></li><li><span><a href="#Probabilidade-de-erro-de-bit-$P_b$" data-toc-modified-id="Probabilidade-de-erro-de-bit-$P_b$-2.5"><span class="toc-item-num">2.5&nbsp;&nbsp;</span>Probabilidade de erro de bit $P_b$</a></span><ul class="toc-item"><li><span><a href="#Exemplo:-simulação-10G-OOK" data-toc-modified-id="Exemplo:-simulação-10G-OOK-2.5.1"><span class="toc-item-num">2.5.1&nbsp;&nbsp;</span>Exemplo: simulação 10G OOK</a></span></li></ul></li></ul></li></ul></div>
+# <div class="toc"><ul class="toc-item"><li><span><a href="#Fontes-de-ruído-em-detectores-ópticos" data-toc-modified-id="Fontes-de-ruído-em-detectores-ópticos-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Fontes de ruído em detectores ópticos</a></span><ul class="toc-item"><li><span><a href="#Ruído-de-disparo-(ou-ruído-balístico)" data-toc-modified-id="Ruído-de-disparo-(ou-ruído-balístico)-1.1"><span class="toc-item-num">1.1&nbsp;&nbsp;</span>Ruído de disparo (ou ruído balístico)</a></span></li><li><span><a href="#Potência-do-ruído-de-disparo" data-toc-modified-id="Potência-do-ruído-de-disparo-1.2"><span class="toc-item-num">1.2&nbsp;&nbsp;</span>Potência do ruído de disparo</a></span><ul class="toc-item"><li><span><a href="#Calculando-a-potência-de-um-sinal" data-toc-modified-id="Calculando-a-potência-de-um-sinal-1.2.1"><span class="toc-item-num">1.2.1&nbsp;&nbsp;</span>Calculando a potência de um sinal</a></span></li></ul></li><li><span><a href="#Ruído-térmico" data-toc-modified-id="Ruído-térmico-1.3"><span class="toc-item-num">1.3&nbsp;&nbsp;</span>Ruído térmico</a></span></li><li><span><a href="#Potência-de-ruído-térmico" data-toc-modified-id="Potência-de-ruído-térmico-1.4"><span class="toc-item-num">1.4&nbsp;&nbsp;</span>Potência de ruído térmico</a></span></li><li><span><a href="#Razão-sinal-ruído-(signal-to-noise-ratio---SNR)" data-toc-modified-id="Razão-sinal-ruído-(signal-to-noise-ratio---SNR)-1.5"><span class="toc-item-num">1.5&nbsp;&nbsp;</span>Razão sinal-ruído (<em>signal-to-noise ratio</em> - SNR)</a></span></li><li><span><a href="#Receptores-p-i-n" data-toc-modified-id="Receptores-p-i-n-1.6"><span class="toc-item-num">1.6&nbsp;&nbsp;</span>Receptores p-i-n</a></span><ul class="toc-item"><li><span><a href="#Limite-de-ruído-térmico-$(\sigma_{T}^{2}-\gg-\sigma_{s}^{2})$" data-toc-modified-id="Limite-de-ruído-térmico-$(\sigma_{T}^{2}-\gg-\sigma_{s}^{2})$-1.6.1"><span class="toc-item-num">1.6.1&nbsp;&nbsp;</span>Limite de ruído térmico $(\sigma_{T}^{2} \gg \sigma_{s}^{2})$</a></span></li><li><span><a href="#Limite-de-ruído-de-disparo-$(\sigma_{s}^{2}-\gg-\sigma_{T}^{2})$" data-toc-modified-id="Limite-de-ruído-de-disparo-$(\sigma_{s}^{2}-\gg-\sigma_{T}^{2})$-1.6.2"><span class="toc-item-num">1.6.2&nbsp;&nbsp;</span>Limite de ruído de disparo $(\sigma_{s}^{2} \gg \sigma_{T}^{2})$</a></span></li><li><span><a href="#Parâmetros-típicos" data-toc-modified-id="Parâmetros-típicos-1.6.3"><span class="toc-item-num">1.6.3&nbsp;&nbsp;</span>Parâmetros típicos</a></span></li></ul></li><li><span><a href="#Simulando-o-transmissor-10G-OOK" data-toc-modified-id="Simulando-o-transmissor-10G-OOK-1.7"><span class="toc-item-num">1.7&nbsp;&nbsp;</span>Simulando o transmissor 10G OOK</a></span></li><li><span><a href="#Simulando-as-fontes-de-ruído-do-receptor-p-i-n" data-toc-modified-id="Simulando-as-fontes-de-ruído-do-receptor-p-i-n-1.8"><span class="toc-item-num">1.8&nbsp;&nbsp;</span>Simulando as fontes de ruído do receptor p-i-n</a></span></li><li><span><a href="#Receptores-baseados-em-APDs" data-toc-modified-id="Receptores-baseados-em-APDs-1.9"><span class="toc-item-num">1.9&nbsp;&nbsp;</span>Receptores baseados em APDs</a></span><ul class="toc-item"><li><span><a href="#Ruído-de-disparo" data-toc-modified-id="Ruído-de-disparo-1.9.1"><span class="toc-item-num">1.9.1&nbsp;&nbsp;</span>Ruído de disparo</a></span></li></ul></li></ul></li><li><span><a href="#Sensitividade-de-receptores" data-toc-modified-id="Sensitividade-de-receptores-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Sensitividade de receptores</a></span><ul class="toc-item"><li><span><a href="#Canal-AWGN-(Additive-White-Gaussian-Noise-Channel)" data-toc-modified-id="Canal-AWGN-(Additive-White-Gaussian-Noise-Channel)-2.1"><span class="toc-item-num">2.1&nbsp;&nbsp;</span>Canal AWGN (<em>Additive White Gaussian Noise Channel</em>)</a></span></li><li><span><a href="#Filtragem-no-receptor" data-toc-modified-id="Filtragem-no-receptor-2.2"><span class="toc-item-num">2.2&nbsp;&nbsp;</span>Filtragem no receptor</a></span></li><li><span><a href="#Filtro-casado" data-toc-modified-id="Filtro-casado-2.3"><span class="toc-item-num">2.3&nbsp;&nbsp;</span>Filtro casado</a></span></li><li><span><a href="#Decisor-ótimo:-avaliando-probabilidades" data-toc-modified-id="Decisor-ótimo:-avaliando-probabilidades-2.4"><span class="toc-item-num">2.4&nbsp;&nbsp;</span>Decisor ótimo: avaliando probabilidades</a></span><ul class="toc-item"><li><span><a href="#Métrica-de-probabilidades-a-posteriori-(MP)" data-toc-modified-id="Métrica-de-probabilidades-a-posteriori-(MP)-2.4.1"><span class="toc-item-num">2.4.1&nbsp;&nbsp;</span>Métrica de <em>probabilidades a posteriori</em> (MP)</a></span></li><li><span><a href="#Limiar-de-decisão-ótimo-$I_d$" data-toc-modified-id="Limiar-de-decisão-ótimo-$I_d$-2.4.2"><span class="toc-item-num">2.4.2&nbsp;&nbsp;</span>Limiar de decisão ótimo $I_d$</a></span></li></ul></li><li><span><a href="#Probabilidade-de-erro-de-bit-$P_b$" data-toc-modified-id="Probabilidade-de-erro-de-bit-$P_b$-2.5"><span class="toc-item-num">2.5&nbsp;&nbsp;</span>Probabilidade de erro de bit $P_b$</a></span><ul class="toc-item"><li><span><a href="#Exemplo:-simulação-10G-OOK" data-toc-modified-id="Exemplo:-simulação-10G-OOK-2.5.1"><span class="toc-item-num">2.5.1&nbsp;&nbsp;</span>Exemplo: simulação 10G OOK</a></span></li></ul></li></ul></li></ul></div>
 # -
 
-# ## Fontes de ruído em receptores ópticos
-#
+# ## Fontes de ruído em detectores ópticos
 #
 # Ruídos são distorções aleatórias e indesejáveis que afetam os sinais que carregam informação, dificultando ou impossibilitando o processo de comunicação. Para analisarmos o desempenho de um dado sistemas de comunicações é necessário que todas as fontes de ruído presentes no mesmo estejam caracterizadas. No caso de receptores em sistemas de comunicações ópticas, duas fontes de ruído são importantes: o ruído de disparo gerado no processo de fotodetecção e o ruído térmico dos componentes eletrônicos.
 
@@ -376,7 +376,6 @@ print('Potência do ruído (em dBm) = %.2f dBm' %(10*np.log10(Pn/1e-3)))
 # +
 # parâmetros da simulação
 SpS = 16
-
 Rs     = 10e9          # Taxa de símbolos (para o caso do OOK Rs = Rb)
 Ts     = 1/Rs          # Período de símbolo em segundos
 Fa     = 1/(Ts/SpS)    # Frequência de amostragem do sinal (amostras/segundo)
@@ -409,7 +408,7 @@ sigTx  = firFilter(pulse, symbolsUp)
 
 # modulação óptica
 Ai     = np.sqrt(Pi)
-sigTxo = mzm(Ai, Vπ, sigTx, Vb)
+sigTxo = mzm(Ai, sigTx, Vπ, Vb)
 
 print('Potência média do sinal óptico modulado (mW): %.2f mW'%(signal_power(sigTxo)/1e-3))
 print('Potência média do sinal óptico modulado (dBm): %.2f dBm'%(10*np.log10(signal_power(sigTxo)/1e-3)))
@@ -482,8 +481,6 @@ plt.psd(It, Fs=Fa, NFFT = 16*1024, sides='twosided', label = 'PSD $I_t(t)$')
 plt.psd(I_Rx, Fs=Fa, NFFT = 16*1024, sides='twosided', label = 'PSD $I_{Rx}(t)$')
 plt.legend(loc='upper left');
 
-Nsamples = 10000
-
 # calculando a na simulação SNR
 Ip_Rx  = firFilter(h, Ip)
 Is_Rx  = firFilter(h, Is)
@@ -500,9 +497,12 @@ print('SNR[teoria] = %.2f dB '%(10*np.log10(SNR_th)))
 print('SNR[sim] = %.2f dB '%(10*np.log10(SNR_est)))
 
 # diagrama de olho
-eyediagram(Ip,  Nsamples, SpS)
-eyediagram(I_Rx, Nsamples, SpS)
+Nsamples = 20000*SpS
+eyediagram(Ip,  Ip.size-SpS, SpS, ptype='fancy')
+eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # -
+
+Ip.size
 
 # ### Receptores baseados em APDs
 #
@@ -873,7 +873,7 @@ sigTx  = firFilter(pulse, symbolsUp)
 
 # modulação óptica
 Ai     = np.sqrt(Pi)
-sigTxo = mzm(Ai, Vπ, 0.5*sigTx, Vb)
+sigTxo = mzm(Ai, 0.5*sigTx, Vπ, Vb)
 
 ### Receptor
 Pin = (np.abs(sigTxo)**2).mean() # Potência óptica média média recebida
