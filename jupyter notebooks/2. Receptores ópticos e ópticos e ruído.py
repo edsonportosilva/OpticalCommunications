@@ -23,6 +23,7 @@ from commpy.utilities import signal_power, upsample
 from optic.dsp import firFilter, pulseShape, lowPassFIR
 from optic.models import mzm, photodiode
 from optic.plot import eyediagram
+from optic.core import parameters
 from numpy.fft import fft, ifft, fftshift, fftfreq
 
 # +
@@ -42,6 +43,9 @@ HTML("""
 # -
 
 figsize(10, 3)
+
+# %load_ext autoreload
+# %autoreload 2
 
 # # Comunicações Ópticas
 
@@ -389,7 +393,7 @@ Vb = -Vπ/2
 Pi = 10**(Pi_dBm/10)*1e-3 # potência de sinal óptico em W na entrada do MZM
 
 # gera sequência de bits pseudo-aleatórios
-bits   = np.random.randint(2, size=10000)    
+bits   = np.random.randint(2, size=100000)    
 n      = np.arange(0, bits.size)
 
 # mapeia bits para pulsos elétricos
@@ -432,12 +436,21 @@ plt.legend(loc='upper left');
 
 # +
 # parâmetros do receptor
-Tc  = 25        # temperatura em Celsius
-B   = 10e9      # banda do receptor em Hz
-Rd  = 0.85      # responsividade em A/W
-Id  = 5e-9      # corrente de escuro em nA
-RL  = 50        # RL em Ohms
+Tc = 25      # temperatura em Celsius
+B  = 10e9    # banda do receptor em Hz
+R  = 0.85    # responsividade em A/W
+Id = 5e-9    # corrente de escuro em nA
+RL = 50      # RL em Ohms
 
+paramPD = parameters()
+paramPD.R = R         # responsividade em A/W
+paramPD.Tc = Tc       # temperatura em Celsius
+paramPD.Id = Id       # corrente de escuro em A
+paramPD.RL = RL       # RL em Ohms
+paramPD.B = 50e9      # Largura de banda Hz
+paramPD.Fs = Fa 
+paramPD.ideal = False
+        
 Pin = (np.abs(sigTxo)**2).mean() # Potência óptica média média recebida
 
 # fotocorrente livre de ruído
@@ -451,10 +464,11 @@ T = Tc + 273.15     # temperatura em Kelvin
 σ2_T = 4*kB*T*B/RL  # variância do ruído térmico
 
 # adiciona ruído do receptor p-i-n aos sinais
-Is   = normal(0, np.sqrt(Fa*(σ2_s/(2*B))), Ip.size)
-It   = normal(0, np.sqrt(Fa*(σ2_T/(2*B))), Ip.size)  
+Is = normal(0, np.sqrt(Fa*(σ2_s/(2*B))), Ip.size)
+It = normal(0, np.sqrt(Fa*(σ2_T/(2*B))), Ip.size)  
 
-I = Ip + Is + It
+# detecta o sinal com o fotodiodo pin
+I = photodiode(sigTxo, paramPD)
 
 # filtragem Rx
 N = 8001
@@ -501,8 +515,6 @@ Nsamples = 20000*SpS
 eyediagram(Ip,  Ip.size-SpS, SpS, ptype='fancy')
 eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # -
-
-Ip.size
 
 # ### Receptores baseados em APDs
 #
