@@ -860,7 +860,7 @@ Tc  = 25    # temperatura em Celsius
 Rd  = 0.85  # responsividade em A/W
 Id  = 5e-9  # corrente de escuro em nA
 RL  = 50    # RL em Ohms
-B   = 5e9   # banda do receptor em Hz
+B   = 10e9   # banda do receptor em Hz
 
 ############# Simulação #############
 
@@ -892,8 +892,20 @@ sigTxo = mzm(Ai, 0.5*sigTx, Vπ, Vb)
 ### Receptor
 Pin = (np.abs(sigTxo)**2).mean() # Potência óptica média média recebida
 
-# fotocorrente livre de ruído
-Ip = Rd*np.abs(sigTxo)**2
+# detecta o sinal com o fotodiodo pin (modelo implementado no OptiCommPy)
+paramPD = parameters()
+paramPD.R = Rd         # responsividade em A/W
+paramPD.Tc = Tc       # temperatura em Celsius
+paramPD.Id = Id       # corrente de escuro em A
+paramPD.RL = RL       # RL em Ohms
+paramPD.B = B         # Largura de banda Hz
+paramPD.Fs = Fa 
+paramPD.ideal = False
+
+I_Rx = photodiode(sigTxo, paramPD)
+I_Rx = I_Rx/np.std(I_Rx)
+
+############ calculando a SNR na simulação
 
 # ruído de disparo 
 σ2_s = 2*q*(Rd*Pin + Id)*B  # variância  
@@ -902,37 +914,32 @@ Ip = Rd*np.abs(sigTxo)**2
 T = Tc + 273.15     # temperatura em Kelvin
 σ2_T = 4*kB*T*B/RL  # variância do ruído térmico
 
-# adiciona ruído do receptor p-i-n aos sinais
+# fotocorrente livre de ruído
+Ip = Rd*np.abs(sigTxo)**2
+
+# ruído do receptor p-i-n aos sinais
 Is   = normal(0, np.sqrt(Fa*(σ2_s/(2*B))), Ip.size)
 It   = normal(0, np.sqrt(Fa*(σ2_T/(2*B))), Ip.size)  
 
-I = Ip + Is + It
-
 # filtragem Rx
-
-# h = pulseShape('nrz', SpS)
-# h = pulse/max(abs(h))
-# h = pulseShape('rrc', SpS, alpha=0.001, N = 2048)
-
 N = 8001
 h = lowPassFIR(B, Fa, N, typeF='rect')
+#h = pulseShape('nrz', SpS)
 
-I_Rx  = firFilter(h, I)
-I_Rx = I_Rx/np.std(I_Rx)
-
-# calculando a SNR na simulação
 Ip_Rx  = firFilter(h, Ip)
 Is_Rx  = firFilter(h, Is)
 It_Rx  = firFilter(h, It)
+
+# SNR estimada numericamente na simulação
+SNR_est = np.var(Ip_Rx)/(np.var(Is_Rx) + np.var(It_Rx))
+
+################################################
 
 # gera sinal para visualização do diagrama de olho
 I_eye = I_Rx[100*SpS:I_Rx.size-100*SpS]
 
 eyediagram(Ip/np.std(Ip),  Ip.size-SpS, SpS, ptype='fancy')
 eyediagram(I_eye/np.std(I_eye), I_eye.size-SpS, SpS, ptype='fancy')
-
-# SNR estimada numericamente na simulação
-SNR_est = np.var(Ip_Rx)/(np.var(Is_Rx) + np.var(It_Rx))
 
 print('Pin[Rx] = %.2f dBm '%(10*np.log10(Pin/1e-3)))
 print('SNR[sim] = %.2f dB \n'%(10*np.log10(SNR_est)))
@@ -975,3 +982,6 @@ print('Pb = %.2e  '%(Pb))
 plt.plot(err,'o', label = 'erros')
 plt.legend()
 plt.grid()
+# -
+
+
