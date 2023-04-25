@@ -675,37 +675,37 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 
 # ### Decisor ótimo: avaliando probabilidades
 #
-# A função do decisor é fornecer uma estimativa $\hat{b}_k$ do k-ésimo bit transmitido a partir de $\hat{y}_k$. Diversas regras de decisão podem ser definidas.
+# A função do decisor é fornecer uma estimativa $\hat{b}_k$ do *k*-ésimo bit transmitido a partir de $\hat{y}_k$. Diversas regras de decisão podem ser definidas.
 #
 # O decisor ótimo utiliza uma regra de decisão que maximiza a probabilidade de acerto *a posteriori* ou, equivalentemente, que minimiza a probabilidade de erro *a posteriori*. Para obtenção de decisores ótimos se faz necessário caracterizar probabilisticamente o canal de comunicações.
 #
 # #### Métrica de *probabilidades a posteriori* (MP)
 #
-# De acordo com o teorema de Bayes, uma métrica proporcional à probabilidade *a posteriori* $p(b_k|y_k)$ é dada por
+# De acordo com o teorema de Bayes, uma métrica proporcional à probabilidade *a posteriori* $P(b_k|\hat{y}_k)$ é dada por
 #
 # $$
 # \begin{equation}
-# \mathrm{MP}(b_k, y_k) = p(y_k|b_k)P(b_k)
+# \mathrm{MP}(b_k|\hat{y}_k) = p(\hat{y}_k|b_k)P(b_k)
 # \end{equation}
 # $$
 #
-# em que $P(b_k)$ é a probabilidade *a priori* associada ao bit $b_k$ e $p(y_k|b_k)$ é a distribuição condicional ou função de verossimilhança associada ao canal de comunicações.
+# em que $P(b_k)$ é a probabilidade *a priori* associada ao bit $b_k$ e $p(\hat{y}_k|b_k)$ é a distribuição condicional ou *função de verossimilhança* associada ao canal de comunicações.
 #
-# Regra de decisão: se $\mathrm{MP}(b_k=1,\hat{y}_k) > \mathrm{MP}(b_k=0,\hat{y}_k)$, então $\hat{b}_k=1$; se $\mathrm{MP}(b_k=0|\hat{y}_k) > \mathrm{MP}(b_k=1|\hat{y}_k)$, então $\hat{b}_k=0$.
+# Regra de decisão: se $\mathrm{MP}(b_k=1|\hat{y}_k) > \mathrm{MP}(b_k=0|\hat{y}_k)$, então $\hat{b}_k=1$; se $\mathrm{MP}(b_k=0|\hat{y}_k) > \mathrm{MP}(b_k=1|\hat{y}_k)$, então $\hat{b}_k=0$.
 #
 # Sabemos que:
 #
-# $$ p(y_k|b_k=0) = \frac{1}{\sigma_{0} \sqrt{2 \pi}} e^{-\frac{\left(y_k-I_0\right)^{2}}{2 \sigma_0^{2}}}$$
+# $$ p(\hat{y}_k|b_k=0) = \frac{1}{\sigma_{0} \sqrt{2 \pi}} e^{-\frac{\left(\hat{y}_k-I_0\right)^{2}}{2 \sigma_0^{2}}}$$
 #
-# $$ p(y_k|b_k=1) = \frac{1}{\sigma_{1} \sqrt{2 \pi}} e^{-\frac{\left(y_k-I_1\right)^{2}}{2 \sigma_1^{2}}}$$
+# $$ p(\hat{y}_k|b_k=1) = \frac{1}{\sigma_{1} \sqrt{2 \pi}} e^{-\frac{\left(\hat{y}_k-I_1\right)^{2}}{2 \sigma_1^{2}}}$$
 
 # Logo, podemos definir a razão $\Lambda$ entre MPs
 #
 # $$
 # \begin{align}
-# \Lambda &= \frac{\mathrm{MP}(b_k=1, y_k)}{\mathrm{MP}(b_k=0, y_k)} 
-#          = \frac{p(y_k|b_k=1)P(b_k=1)}{p(y_k|b_k=0)P(b_k=0)}\\
-#         &= \frac{\sigma_0}{\sigma_1} \frac{P_1}{P_0} \left[\frac{e^{-\frac{\left(y_k-I_1\right)^{2}}{2 \sigma_1^{2}}}}{e^{-\frac{\left(y_k-I_0\right)^2}{2 \sigma_0^{2}}}}\right].        
+# \Lambda &= \frac{\mathrm{MP}(b_k=1, \hat{y}_k)}{\mathrm{MP}(b_k=0, \hat{y}_k)} 
+#          = \frac{p(\hat{y}_k|b_k=1)P(b_k=1)}{p(\hat{y}_k|b_k=0)P(b_k=0)}\\
+#         &= \frac{\sigma_0}{\sigma_1} \frac{P_1}{P_0} \left[\frac{e^{-\frac{\left(\hat{y}_k-I_1\right)^{2}}{2 \sigma_1^{2}}}}{e^{-\frac{\left(\hat{y}_k-I_0\right)^2}{2 \sigma_0^{2}}}}\right].        
 # \end{align}
 # $$
 #
@@ -714,9 +714,9 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # Aplicando o logaritmo 
 # $$
 # \begin{align}
-# \ln \Lambda &= \ln{\frac{\sigma_0}{\sigma_1} \frac{P_1}{P_0} \left[\frac{e^{-\frac{\left(y_k-I_1\right)^{2}}{2 \sigma_1^{2}}}}{e^{-\frac{\left(y_k-I_0\right)^2}{2 \sigma_0^{2}}}}\right]}\\ 
-#             &=\ln\left[\frac{\sigma_0}{\sigma_1}\right] + \ln\left[\frac{P_1}{P_0}\right] + \ln{\left[\frac{e^{-\frac{\left(y_k-I_1\right)^{2}}{2 \sigma_1^{2}}}}{e^{-\frac{\left(y_k-I_0\right)^2}{2 \sigma_0^{2}}}}\right]}\\
-#             &=\ln\left[\frac{\sigma_0}{\sigma_1}\right] + \ln\left[\frac{P_1}{P_0}\right] -\frac{\left(y_k-I_1\right)^{2}}{2 \sigma_1^{2}} +\frac{\left(y_k-I_0\right)^2}{2 \sigma_0^{2}}
+# \ln \Lambda &= \ln{\frac{\sigma_0}{\sigma_1} \frac{P_1}{P_0} \left[\frac{e^{-\frac{\left(\hat{y}_k-I_1\right)^{2}}{2 \sigma_1^{2}}}}{e^{-\frac{\left(\hat{y}_k-I_0\right)^2}{2 \sigma_0^{2}}}}\right]}\\ 
+#             &=\ln\left[\frac{\sigma_0}{\sigma_1}\right] + \ln\left[\frac{P_1}{P_0}\right] + \ln{\left[\frac{e^{-\frac{\left(\hat{y}_k-I_1\right)^{2}}{2 \sigma_1^{2}}}}{e^{-\frac{\left(\hat{y}_k-I_0\right)^2}{2 \sigma_0^{2}}}}\right]}\\
+#             &=\ln\left[\frac{\sigma_0}{\sigma_1}\right] + \ln\left[\frac{P_1}{P_0}\right] -\frac{\left(\hat{y}_k-I_1\right)^{2}}{2 \sigma_1^{2}} +\frac{\left(\hat{y}_k-I_0\right)^2}{2 \sigma_0^{2}}
 # \end{align}
 # $$
 #
@@ -726,7 +726,7 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 #
 # $$
 # \begin{equation}
-# \ln \Lambda = -\frac{\left(y_k-I_1\right)^{2}}{2 \sigma_1^{2}} +\frac{\left(y_k-I_0\right)^2}{2 \sigma_0^{2}}
+# \ln \Lambda = -\frac{\left(\hat{y}_k-I_1\right)^{2}}{2 \sigma_1^{2}} +\frac{\left(\hat{y}_k-I_0\right)^2}{2 \sigma_0^{2}}
 # \end{equation}
 # $$
 #
@@ -762,7 +762,7 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # \end{equation}
 # $$
 #
-# Em função de do limiar de decisão ótimo $I_d$, a regra de decisão ótima torna-se: se $y_k>I_d$, $\hat{b}_k=1$; se $y_k<I_d$, $\hat{b}_k=0$.
+# Em função de do limiar de decisão ótimo $I_d$, a regra de decisão ótima torna-se: se $\hat{y}_k>I_d$, $\hat{b}_k=1$; se $\hat{y}_k<I_d$, $\hat{b}_k=0$.
 
 # ### Probabilidade de erro de bit $P_b$
 #
@@ -771,15 +771,15 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # $$
 # \begin{align}
 # P_b &= P(\hat{b}_k=0, b_k=1) + P(\hat{b}_k=1, b_k=0) \nonumber\\
-#     &= P(\hat{b}_k=0\mid b_k=1)P(b_k=1) + P(\hat{b}_k=1\mid b_k=0)P(b_k=0) \nonumber\\
-#     &= P(y_k < I_d\mid b_k=1)P(b_k=1) + P(y_k > I_d\mid b_k=0)P(b_k=0)
+#     &= P(\hat{b}_k=0 | b_k=1)P(b_k=1) + P(\hat{b}_k=1 | b_k=0)P(b_k=0) \nonumber\\
+#     &= P(\hat{y}_k < I_d | b_k=1)P(b_k=1) + P(\hat{y}_k > I_d | b_k=0)P(b_k=0)
 # \end{align}
 # $$
 #
 # $$
 # \begin{align}
-# &P(y_k < I_d\mid b_k=1)&=\frac{1}{\sigma_{1} \sqrt{2 \pi}} \int_{-\infty}^{I_d} \exp \left(-\frac{\left(y_k-I_{1}\right)^{2}}{2 \sigma_{1}^{2}}\right) dy_k=\frac{1}{2} \operatorname{erfc}\left(\frac{I_{1}-I_d}{\sigma_{1} \sqrt{2}}\right) \\
-# &P(y_k > I_d\mid b_k=0)&=\frac{1}{\sigma_{0} \sqrt{2 \pi}} \int_{I_d}^{\infty} \exp \left(-\frac{\left(y_k-I_{0}\right)^{2}}{2 \sigma_{0}^{2}}\right) d y_k=\frac{1}{2} \operatorname{erfc}\left(\frac{I_d-I_{0}}{\sigma_{0} \sqrt{2}}\right)
+# &P(\hat{y}_k < I_d | b_k=1)&=\frac{1}{\sigma_{1} \sqrt{2 \pi}} \int_{-\infty}^{I_d} \exp \left(-\frac{\left(\hat{y}_k-I_{1}\right)^{2}}{2 \sigma_{1}^{2}}\right) d\hat{y}_k=\frac{1}{2} \operatorname{erfc}\left(\frac{I_{1}-I_d}{\sigma_{1} \sqrt{2}}\right) \\
+# &P(\hat{y}_k > I_d| b_k=0)&=\frac{1}{\sigma_{0} \sqrt{2 \pi}} \int_{I_d}^{\infty} \exp \left(-\frac{\left(\hat{y}_k-I_{0}\right)^{2}}{2 \sigma_{0}^{2}}\right) d \hat{y}_k=\frac{1}{2} \operatorname{erfc}\left(\frac{I_d-I_{0}}{\sigma_{0} \sqrt{2}}\right)
 # \end{align}
 # $$
 #
@@ -826,15 +826,18 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 from scipy.special import erfc
 
 # +
-Q  = np.arange(0, 8.1, 0.1)
+Q  = np.arange(1, 11.1, 0.1)
+
+QdB = 10*np.log10(Q)
+
 Pb = 0.5*erfc(Q/np.sqrt(2))
 
 plt.figure(figsize=(7,5))
-plt.plot(Q, np.log10(Pb),label='Pb')
+plt.plot(QdB, np.log10(Pb),label='Pb')
 plt.title('Pb vs Q - OOK')
-plt.xlabel('Q')
+plt.xlabel('Q [dB]')
 plt.ylabel('$\log_{10}(P_b)$');
-plt.xlim(min(Q),max(Q))
+plt.xlim(min(QdB),max(QdB))
 plt.grid()
 # -
 
