@@ -585,7 +585,7 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # \begin{align}
 # \hat{y}(t) &= y(t) \ast h(t)\nonumber\\
 #            &= \left[\sum_k s_kp(t-kT_s)\right]\ast h(t)  + n(t)\ast h(t)\nonumber\\
-#            &= \sum_k s_k\int_{-\infty}^{-\infty}p(\tau-kT_s)h(t-\tau)d\tau  + \int_{-\infty}^{-\infty}n(t)h(t-\tau)d\tau\nonumber\\
+#            &= \sum_k s_k\int_{-\infty}^{\infty}p(\tau-kT_s)h(t-\tau)d\tau  + \int_{-\infty}^{\infty}n(t)h(t-\tau)d\tau\nonumber\\
 #            &= \hat{x}(t)  + \hat{n}(t).
 # \end{align}
 # $$
@@ -603,8 +603,8 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # $$
 # \begin{align}
 # P_s &= E[\hat{x}(kT_s)^2] \nonumber\\
-#     &= E\left[ \left(s_k\int_{-\infty}^{-\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2 \right] \nonumber\\
-#     &= E\left[s_k^2\right] \left(\int_{-\infty}^{-\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2.
+#     &= E\left[ \left(s_k\int_{-\infty}^{\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2 \right] \nonumber\\
+#     &= E\left[s_k^2\right] \left(\int_{-\infty}^{\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2.
 # \end{align}
 # $$
 #
@@ -613,10 +613,10 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # $$
 # \begin{align}
 # P_n &= E[\hat{n}(kT_s)^2] \nonumber\\
-#     &= E\left[\left(\int_{-\infty}^{-\infty}n(\tau)h(kT_s-\tau)d\tau\int_{-\infty}^{-\infty}n(u)h(kT_s-u)du\right) \right] \nonumber\\
-#     &= \int_{-\infty}^{-\infty}\int_{-\infty}^{-\infty}E\left[n(\tau)n(u)\right]h(kT_s-\tau)h(kT_s-u)d\tau du\nonumber\\
-#     &= \sigma_n^2 \int_{-\infty}^{-\infty}\int_{-\infty}^{-\infty}\delta(\tau-u)h(kT_s-\tau)h(kT_s-u)d\tau du\nonumber\\
-#     &= \sigma_n^2 \int_{-\infty}^{-\infty}h^2(kT_s-\tau)d\tau.
+#     &= E\left[\left(\int_{-\infty}^{\infty}n(\tau)h(kT_s-\tau)d\tau\int_{-\infty}^{\infty}n(u)h(kT_s-u)du\right) \right] \nonumber\\
+#     &= \int_{-\infty}^{\infty}\int_{-\infty}^{\infty}E\left[n(\tau)n(u)\right]h(kT_s-\tau)h(kT_s-u)d\tau du\nonumber\\
+#     &= \sigma_n^2 \int_{-\infty}^{\infty}\int_{-\infty}^{\infty}\delta(\tau-u)h(kT_s-\tau)h(kT_s-u)d\tau du\nonumber\\
+#     &= \sigma_n^2 \int_{-\infty}^{\infty}h^2(kT_s-\tau)d\tau.
 # \end{align}
 # $$
 #
@@ -625,7 +625,7 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 # $$
 # \begin{align}
 # \mathrm{SNR} &= \frac{P_s}{P_n} = \frac{E[\hat{x}(kT_s)^2]}{E[\hat{n}(kT_s)^2]} \nonumber\\
-#              &= \frac{E\left[s_k^2\right] \left(\int_{-\infty}^{-\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2}{\sigma_n^2 \int_{-\infty}^{-\infty}h^2(kT_s-\tau)d\tau}
+#              &= \frac{E\left[s_k^2\right] \left(\int_{-\infty}^{\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2}{\sigma_n^2 \int_{-\infty}^{\infty}h^2(kT_s-\tau)d\tau}
 # \end{align}
 # $$
 
@@ -658,7 +658,7 @@ eyediagram(I_Rx, I_Rx.size-SpS, SpS, ptype='fancy')
 #
 # $$
 # \begin{align}
-# \mathrm{SNR} &= \frac{E\left[s_k^2\right] \left(\int_{-\infty}^{-\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2}{\sigma_n^2 \int_{-\infty}^{-\infty}h^2(kT_s-\tau)d\tau}\nonumber\\
+# \mathrm{SNR} &= \frac{E\left[s_k^2\right] \left(\int_{-\infty}^{\infty}p(\tau-kT_s)h(kT_s-\tau)d\tau\right)^2}{\sigma_n^2 \int_{-\infty}^{-\infty}h^2(kT_s-\tau)d\tau}\nonumber\\
 #              &\leq  \frac{E\left[s_k^2\right]}{\sigma_n^2} \int_{-\infty}^{\infty} p^2(\tau-kT_s) d \tau
 # \end{align}
 # $$
