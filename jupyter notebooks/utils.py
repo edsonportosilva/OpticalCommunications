@@ -41,9 +41,9 @@ def symplot(t, F, interval, funLabel, xlabel="tempo [s]", ylabel="", fig=None):
     :param interval: array of values of t where F should be evaluated [np.array]
     :funLabel: curve label be displayed in the plot [string].
     """
-    if fig == None:
+    if fig is None:
         fig = plt.figure()
-        
+
     if type(F) == list:
         for indLabel, f in enumerate(F):
             plotFunc(t, f, interval, funLabel[indLabel], xlabel, ylabel)
@@ -103,7 +103,64 @@ def genGIF(x, y, figName, xlabel=[], ylabel=[], fram=200, inter=20):
         return (line,)
 
     def animate(i):
-        line.set_data(x[0 : indx[i]], y[0 : indx[i]])
+        line.set_data(x[:indx[i]], y[:indx[i]])
+        return (line,)
+
+    anim = FuncAnimation(
+        figAnin,
+        animate,
+        init_func=init,
+        frames=fram,
+        interval=inter,
+        blit=True,
+    )
+
+    anim.save(figName, dpi=200, writer="imagemagick")
+    plt.close()
+
+def genSignalGIF(x, y, windowSize, figName, xlabel=[], ylabel=[], fram=200, inter=20):
+    """
+    Create and save a plot animation as GIF
+
+    :param x: x-axis values [np array]
+    :param y: y-axis values [np array]
+    :param figName: figure file name w/ folder path [string]
+    :param xlabel: xlabel [string]
+    :param ylabel: ylabel [string]
+    :param fram: number of frames [int]
+    :param inter: time interval between frames [milliseconds]
+
+    """
+    indx = np.arange(windowSize, dtype=int)
+    dx = x[1] - x[0]
+    xFrame = indx*dx
+    nWindows = len(x)-2*windowSize
+    stepPlot = int(nWindows//fram)
+
+    figAnin = plt.figure()
+    ax = plt.axes(
+       xlim=(np.min(xFrame), np.max(xFrame)),
+        ylim=(
+            np.min(y) - 0.1 * np.max(np.abs(y)),
+            np.max(y) + 0.1 * np.max(np.abs(y)),
+        ),
+    )
+    (line,) = ax.plot([], [])
+    ax.grid()
+
+    
+    if len(xlabel):
+        plt.xlabel(xlabel)
+
+    if len(ylabel):
+        plt.ylabel(ylabel)
+
+    def init():
+        line.set_data([], [])
+        return (line,)
+
+    def animate(i):
+        line.set_data(x[indx], y[indx+i*stepPlot])
         return (line,)
 
     anim = FuncAnimation(
@@ -210,7 +267,7 @@ def genConvGIF(
         line2.set_data(figx.get_axes()[0].lines[0].get_data())
 
         if plotConv:
-            line3.set_data(totalTime[0 : ind[i]], y_num[0 : ind[i]])
+            line3.set_data(totalTime[:ind[i]], y_num[:ind[i]])
 
         plt.close(figx)
         return line2, line3
