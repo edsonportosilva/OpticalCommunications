@@ -851,7 +851,7 @@ Ts     = 1/Rs       # Período de símbolo em segundos
 Fa     = 1/(Ts/SpS) # Frequência de amostragem do sinal (amostras/segundo)
 Ta     = 1/Fa       # Período de amostragem
 
-Pi_dBm = -10  # potência de sinal óptico na entrada do modulador em dBm
+Pi_dBm = -17  # potência de sinal óptico na entrada do modulador em dBm
 
 # parâmetros do MZM
 Vπ = 2
@@ -961,6 +961,7 @@ I0 = np.mean(I_Rx[bitsTx==0]) # valor médio de I0
 Id = (σ1*I0 + σ0*I1)/(σ1 + σ0) # limiar de decisão ótimo
 Q  = (I1-I0)/(σ1 + σ0)         # fator Q
 
+print('Parâmetros do diagrama de olho:')
 print('I0 = %.2f  '%(I0))
 print('I1 = %.2f  '%(I1))
 print('σ0 = %.2f  '%(σ0))
@@ -982,9 +983,36 @@ print('Total de erros contados = %d  '%(err.sum()))
 print('BER = %.2e  '%(BER))
 print('Pb = %.2e  '%(Pb))
 
+
 plt.plot(err,'o', label = 'erros')
+plt.vlines(np.where(err>0), 0, 1)
+plt.xlabel('intervalo de sinalização')
+plt.ylabel('erro contabilizado')
 plt.legend()
 plt.grid()
+plt.ylim(0, 1.5)
+plt.xlim(0,err.size);
+plt.yticks([]);  # Disable yticks.
+# -
+from utils import genSignalGIF
+
+# +
+from IPython.display import Image
+
+I_Rx = photodiode(sigTxo, paramPD)
+I_Rx = I_Rx/np.std(I_Rx)
+
+t = np.arange(len(Ip_Rx[0:2048]))
+
+figName1  = './figuras/sig.gif'
+figName2  = './figuras/sigNoisy.gif'
+
+windowSize = 256
+
+genSignalGIF(t, Ip_Rx[0:2048], windowSize, figName1, fram=128, inter=80)
+genSignalGIF(t, I_Rx[0:2048], windowSize, figName2, fram=128, inter=80)
 # -
 
+Image('./figuras/sig.gif', width=500)
 
+Image('./figuras/sigNoisy.gif', width=500)
