@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -851,7 +851,7 @@ Ts     = 1/Rs       # Período de símbolo em segundos
 Fa     = 1/(Ts/SpS) # Frequência de amostragem do sinal (amostras/segundo)
 Ta     = 1/Fa       # Período de amostragem
 
-Pi_dBm = -17  # potência de sinal óptico na entrada do modulador em dBm
+Pi_dBm = -18  # potência de sinal óptico na entrada do modulador em dBm
 
 # parâmetros do MZM
 Vπ = 2
