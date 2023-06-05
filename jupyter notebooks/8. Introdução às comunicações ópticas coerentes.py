@@ -7,9 +7,9 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.3
+#       jupytext_version: 1.14.5
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -19,10 +19,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sympy import Matrix, zeros
 from numpy.random import normal
-from commpy.utilities  import signal_power, upsample
-from commpy.modulation import Modem, QAMModem
-from utils.dsp import firFilter, pulseShape, eyediagram, lowPassFIR, edc, fourthPowerFOE, dbp, cpr
-from utils.models import mzm, linFiberCh, iqm, ssfm, edfa, phaseNoise, coherentReceiver
+from commpy.utilities  import upsample
+from optic.dsp import firFilter, pulseShape, lowPassFIR
+from optic.metrics import signal_power
+from optic.plot import eyediagram
+from optic.equalization import edc, mimoAdaptEqualizer
+from optic.carrierRecovery import cpr, fourthPowerFOE
+from optic.models import mzm, linFiberCh, iqm, ssfm, edfa, phaseNoise, coherentReceiver
 
 from numpy.fft import fft, ifft, fftshift, ifftshift, fftfreq
 from tqdm.notebook import tqdm
@@ -50,23 +53,8 @@ HTML("""
 #figsize(7, 2.5)
 figsize(10, 3)
 
-# +
 import sympy as sp
-from IPython.display import Math, display
-
-# função para print de expressões simbólicas
-def symdisp(expr, var, unit=' '):
-    '''
-    Latex style display of sympy expressions
-    
-    :param expr: expression in latex [string]
-    :param var: sympy variable, function, expression.
-    :param unit: string indicating unit of var [string]
-    '''
-    display(Math(expr+sp.latex(var)+'\;'+unit))
-
-
-# -
+from utils import symdisp, symplot
 
 # # Introdução às Comunicações Ópticas Coerentes
 
@@ -583,7 +571,7 @@ sigTx  = firFilter(pulse, symbolsUp)
 
 # modulação óptica
 Ai      = np.sqrt(Pi)
-sigTxo_ = mzm(Ai, Vπ, Amp*sigTx, Vb)
+sigTxo_ = mzm(Ai, Amp*sigTx, Vπ, Vb)
 
 # adiciona ruído ASE ao sinal óptico
 σASE  = 1e-6#1e-5
@@ -666,20 +654,16 @@ plt.grid()
 plt.plot(sigRx[ind].real,sigRx[ind].imag,'.', markersize=4, label='Rx')
 plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx')
 plt.legend();
-
-
 # -
 
 # ### Exemplo: simulação com formatos QPSK, QAM
 #
 # **Modulador óptico IQ**
 
-def iqm(Ai, sig, Vπ, VbI, VbQ):
-
-    sigOut = mzm(Ai/np.sqrt(2), Vπ, sig.real, VbI) + 1j*mzm(Ai/np.sqrt(2), Vπ, sig.imag, VbQ)
-    
-    return sigOut
-
+from optic.modulation import modulateGray, demodulateGray, GrayMapping
+from optic.dsp import pnorm, decimate
+from optic.models import linFiberCh
+from optic.core import parameters
 
 # +
 plotEyeDiagrams = False
@@ -725,19 +709,17 @@ Plo = 10**(Plo_dBm/10)*1e-3 # potência do oscilador local na entrada do recepto
 bitsTx   = np.random.randint(2, size=80000)    
 
 # mapeia bits para símbolos QAM
-mod = QAMModem(m=M)
-symbTx = mod.modulate(bitsTx)
-Es = mod.Es;
+symbTx = modulateGray(bitsTx, M, 'qam')
 
 # normaliza energia média dos símbolos para 1
-symbTx = symbTx/np.sqrt(Es)
+symbTx = pnorm(symbTx)
 
 # upsampling
 symbolsUp = upsample(symbTx, SpS)
 
 # pulso
 #pulse = pulseShape('nrz', SpS)
-pulse = pulseShape('rrc', SpS, N=2048, alpha=0.01, Ts=Ts)
+pulse = pulseShape('rrc', SpS, N=4096, alpha=0.01, Ts=Ts)
 pulse = pulse/np.max(np.abs(pulse))
 
 # formatação de pulso
@@ -748,13 +730,14 @@ Ai      = np.sqrt(Pi)
 sigTxo_ = iqm(Ai, 0.5*sigTx, Vπ, Vb, Vb)
     
 # adiciona ruído ASE ao sinal óptico
-σASE  = 1e-40
-ruido = normal(0, np.sqrt(Fa*(σASE/(2*B))), sigTxo_.size) + 1j*normal(0, np.sqrt(Fa*(σASE/(2*B))), sigTxo_.size)
+σ2ASE  = 1e-10
+σ2 = σ2ASE*(Fa/B)
+ruido = normal(0, np.sqrt(σ2), sigTxo_.size) + 1j*normal(0, np.sqrt(σ2), sigTxo_.size)
 
-sigTxo = sigTxo_ + ruido
+sigTxo = sigTxo_ + 0*ruido
 
 # calculando a OSNR na simulação
-OSNR = signal_power(sigTxo_)/(signal_power(ruido)*(B/Fa))
+OSNR = signal_power(sigTxo_)/(σ2ASE*B)
 
 # plota psd
 if plotPSD:
@@ -765,23 +748,21 @@ if plotPSD:
     plt.xlim(-4*Rs,4*Rs);
 
 ### Canal óptico linear
-sigTxo = linFiberCh(sigTxo, Ltotal, alpha, D, Fc, Fa)
+sigRxo = linFiberCh(sigTxo, Ltotal, alpha, D, Fc, Fa)
 
 ### Recepcão coerente
 Pin = (np.abs(sigTxo)**2).mean() # Potência óptica média média recebida
 
 # oscilador local
-t      = np.arange(0, sigTxo.size)*Ta
-ϕ_pn_lo  = phaseNoise(lw, sigTxo.size, Ta)
+t      = np.arange(0, sigRxo.size)*Ta
+ϕ_pn_lo  = phaseNoise(lw, sigRxo.size, Ta)
 
 sigLO = np.sqrt(Plo)*np.exp(1j*(2*π*Δf_lo*t + ϕ_lo + ϕ_pn_lo))
 
 # receptor coerente
-sigRx = coherentReceiver(sigTxo, sigLO)
+sigRx = coherentReceiver(sigRxo, sigLO)
 
 # filtragem Rx
-N = 4001
-h = lowPassFIR(B, Fa, N, typeF='rect')
 sigRx = firFilter(pulse, sigRx)
 
 # plota psd
@@ -794,8 +775,8 @@ if plotPSD:
 
 # calculando a OSNR na simulação
 #sigTxo_Rx   = firFilter(h, sigTxo_)
-sigTxo_DDRx = firFilter(h, sigTxo)
-ruido_Rx    = firFilter(h, ruido)
+sigRxo_DD = firFilter(h, sigRxo)
+ruido_Rx  = firFilter(h, ruido)
 
 Nsamples = 16000
 sigEye = sigRx.copy()
@@ -804,19 +785,22 @@ sigEye = sigRx.copy()
 if plotEyeDiagrams:
     eyediagram(sigTx,  Nsamples, SpS, plotlabel = 'Tx')
     eyediagram(sigEye, Nsamples, SpS, plotlabel = 'Coh-Rx')
-    eyediagram(np.abs(sigTxo_DDRx)**2, Nsamples, SpS, plotlabel = 'DD-Rx')
+    eyediagram(np.abs(sigRxo_DD)**2, Nsamples, SpS, plotlabel = 'DD-Rx')
 
 # compensa dispersão cromática
 sigRx = edc(sigRx, Ltotal, D, Fc, Fa)
 
 # captura amostras no meio dos intervalos de sinalização
-sigRx = sigRx[0::SpS]
+paramDec = parameters()
+paramDec.SpS_in = SpS
+paramDec.SpS_out = 1
+sigRx = decimate(sigRx.reshape(-1,1), paramDec).reshape(-1,)
 
 discard = 2000
 ind = np.arange(discard, sigRx.size-discard)
 
 # normaliza constelação recebida
-sigRx = sigRx/np.sqrt(signal_power(sigRx[ind]))
+sigRx = pnorm(sigRx)
 
 # compensa (possível) rotação de fase adicionada pelo canal
 rot = np.mean(symbTx[ind]/sigRx[ind])
@@ -826,7 +810,9 @@ sigRx  = rot*sigRx
 SNR = signal_power(symbTx[ind])/signal_power(sigRx[ind]-symbTx[ind])
 
 # Aplica a regra de decisão brusca        
-bitsRx = mod.demodulate(np.sqrt(Es)*sigRx, demod_type = 'hard') 
+constSymb = GrayMapping(M, 'qam')
+Es = np.mean(np.abs(constSymb) ** 2)
+bitsRx = demodulateGray(np.sqrt(Es)*pnorm(sigRx), M, 'qam') 
 
 err = np.logical_xor(bitsRx[discard:bitsRx.size-discard], 
                      bitsTx[discard:bitsTx.size-discard])
@@ -853,8 +839,6 @@ plt.grid()
 
 plt.plot(sigRx[ind].real,sigRx[ind].imag,'.', markersize=4, label='Rx')
 plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx');
-
-
 # -
 
 # ## Multiplexação de polarização
@@ -863,84 +847,86 @@ plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx');
 
 # ## Sistemas WDM coerentes
 
-def simpleWDMTx(param):
+# +
+from optic.tx import simpleWDMTx
+# def simpleWDMTx(param):
     
-    # transmitter parameters
-    Ts  = 1/param.Rs        # symbol period [s]
-    Fa  = 1/(Ts/param.SpS)  # sampling frequency [samples/s]
-    Ta  = 1/Fa              # sampling period [s]
+#     # transmitter parameters
+#     Ts  = 1/param.Rs        # symbol period [s]
+#     Fa  = 1/(Ts/param.SpS)  # sampling frequency [samples/s]
+#     Ta  = 1/Fa              # sampling period [s]
     
-    # central frequencies of the WDM channels
-    freqGrid = np.arange(-np.floor(param.Nch/2), np.floor(param.Nch/2)+1,1)*param.freqSpac
+#     # central frequencies of the WDM channels
+#     freqGrid = np.arange(-np.floor(param.Nch/2), np.floor(param.Nch/2)+1,1)*param.freqSpac
     
-    if (param.Nch % 2) == 0:
-        freqGrid += param.freqSpac/2
+#     if (param.Nch % 2) == 0:
+#         freqGrid += param.freqSpac/2
         
-    # IQM parameters
-    Ai = 1
-    Vπ = 2
-    Vb = -Vπ
-    Pch = 10**(param.Pch_dBm/10)*1e-3   # optical signal power per WDM channel
+#     # IQM parameters
+#     Ai = 1
+#     Vπ = 2
+#     Vb = -Vπ
+#     Pch = 10**(param.Pch_dBm/10)*1e-3   # optical signal power per WDM channel
         
-    π = np.pi
+#     π = np.pi
     
-    t = np.arange(0, int(((param.Nbits)/np.log2(param.M))*param.SpS))
+#     t = np.arange(0, int(((param.Nbits)/np.log2(param.M))*param.SpS))
     
-    # allocate array 
-    sigTxWDM  = np.zeros((len(t), param.Nmodes), dtype='complex')
-    symbTxWDM = np.zeros((int(len(t)/param.SpS), param.Nmodes, param.Nch), dtype='complex')
+#     # allocate array 
+#     sigTxWDM  = np.zeros((len(t), param.Nmodes), dtype='complex')
+#     symbTxWDM = np.zeros((int(len(t)/param.SpS), param.Nmodes, param.Nch), dtype='complex')
     
-    Psig = 0
+#     Psig = 0
     
-    for indMode in range(0, param.Nmodes):        
-        print('Mode #%d'%(indMode))
+#     for indMode in range(0, param.Nmodes):        
+#         print('Mode #%d'%(indMode))
         
-        for indCh in range(0, param.Nch):
-            # generate random bits
-            bitsTx   = np.random.randint(2, size=param.Nbits)    
+#         for indCh in range(0, param.Nch):
+#             # generate random bits
+#             bitsTx   = np.random.randint(2, size=param.Nbits)    
 
-            # map bits to constellation symbols
-            mod = QAMModem(m=param.M)
-            symbTx = mod.modulate(bitsTx)
-            Es = mod.Es
+#             # map bits to constellation symbols
+#             mod = QAMModem(m=param.M)
+#             symbTx = mod.modulate(bitsTx)
+#             Es = mod.Es
 
-            # normalize symbols energy to 1
-            symbTx = symbTx/np.sqrt(Es)
+#             # normalize symbols energy to 1
+#             symbTx = symbTx/np.sqrt(Es)
             
-            symbTxWDM[:,indMode,indCh] = symbTx
+#             symbTxWDM[:,indMode,indCh] = symbTx
             
-            # upsampling
-            symbolsUp = upsample(symbTx, param.SpS)
+#             # upsampling
+#             symbolsUp = upsample(symbTx, param.SpS)
 
-            # pulse shaping
-            if param.pulse == 'nrz':
-                pulse = pulseShape('nrz', param.SpS)
-            elif param.pulse == 'rrc':
-                pulse = pulseShape('rrc', param.SpS, N=param.Ntaps, alpha=param.alphaRRC, Ts=Ts)
+#             # pulse shaping
+#             if param.pulse == 'nrz':
+#                 pulse = pulseShape('nrz', param.SpS)
+#             elif param.pulse == 'rrc':
+#                 pulse = pulseShape('rrc', param.SpS, N=param.Ntaps, alpha=param.alphaRRC, Ts=Ts)
 
-            pulse = pulse/np.max(np.abs(pulse))
-            sigTx = firFilter(pulse, symbolsUp)
+#             pulse = pulse/np.max(np.abs(pulse))
+#             sigTx = firFilter(pulse, symbolsUp)
 
-            # optical modulation
-            sigTxCh = iqm(Ai, 0.5*sigTx, Vπ, Vb, Vb)
-            sigTxCh = np.sqrt(Pch/param.Nmodes)*sigTxCh/np.sqrt(signal_power(sigTxCh))
+#             # optical modulation
+#             sigTxCh = iqm(Ai, 0.5*sigTx, Vπ, Vb, Vb)
+#             sigTxCh = np.sqrt(Pch/param.Nmodes)*sigTxCh/np.sqrt(signal_power(sigTxCh))
             
-            print('channel %d power : %.2f dBm, fc : %3.4f THz' 
-                  %(indCh+1, 10*np.log10(signal_power(sigTxCh)/1e-3), 
-                    (param.Fc+freqGrid[indCh])/1e12))
+#             print('channel %d power : %.2f dBm, fc : %3.4f THz' 
+#                   %(indCh+1, 10*np.log10(signal_power(sigTxCh)/1e-3), 
+#                     (param.Fc+freqGrid[indCh])/1e12))
 
-            sigTxWDM[:,indMode] += sigTxCh*np.exp(1j*2*π*(freqGrid[indCh]/Fa)*t)
+#             sigTxWDM[:,indMode] += sigTxCh*np.exp(1j*2*π*(freqGrid[indCh]/Fa)*t)
             
-        Psig += signal_power(sigTxWDM[:,indMode])
+#         Psig += signal_power(sigTxWDM[:,indMode])
         
-    print('total WDM signal power: %.2f dBm'%(10*np.log10(Psig/1e-3)))
+#     print('total WDM signal power: %.2f dBm'%(10*np.log10(Psig/1e-3)))
     
-    return sigTxWDM, symbTxWDM, freqGrid
+#     return sigTxWDM, symbTxWDM, freqGrid
 
-
-class parameters:
-    pass
-
+# +
+# class parameters:
+#     pass
+# -
 
 # **Geração de sinal WDM**
 
@@ -960,7 +946,7 @@ param.Fc      = 193.1e12 # frequência central do espectro WDM
 param.freqSpac = 40e9    # espaçamento em frequência da grade de canais WDM
 param.Nmodes = 1         # número de modos de polarização
 
-sigWDM_Tx, symbTx_, freqGrid = simpleWDMTx(param)
+sigWDM_Tx, symbTx_, paramTx = simpleWDMTx(param)
 # -
 # **Transmissão via fibra SMF (split-step Fourier)**
 
@@ -980,7 +966,17 @@ if canalLinear:
     sigWDM = linFiberCh(sigWDM_Tx, Ltotal, alpha, D, Fc, param.Rs*param.SpS)
 else:
     #powerProfile(param.Pch_dBm, alpha, Lspan, Ltotal/Lspan)
-    sigWDM = ssfm(sigWDM_Tx, param.Rs*param.SpS, Ltotal, Lspan, hz, alpha, gamma, D, Fc, amp='edfa') 
+    paramCh = parameters()
+    paramCh.Ltotal = Ltotal
+    paramCh.Lspan = Lspan
+    paramCh.alpha = alpha
+    paramCh.D = D
+    paramCh.Fc = Fc
+    paramCh.hz = hz
+    paramCh.gamma = gamma
+    paramCh.amp = 'edfa'    
+    
+    sigWDM, paramCh = ssfm(sigWDM_Tx, param.Rs*param.SpS, paramCh) 
 # -
 
 # **Espectro dos canais WDM antes e após a transmissão**
@@ -1005,18 +1001,17 @@ plotPSD = True
 
 Fa = param.SpS*param.Rs
 Ta = 1/Fa
-mod = QAMModem(m=param.M)
 
 print('Demodulando canal #%d , fc: %.4f THz, λ: %.4f nm'\
-      %(chIndex, (Fc + freqGrid[chIndex])/1e12, const.c/(Fc + freqGrid[chIndex])/1e-9))
+      %(chIndex, (Fc + paramTx.freqGrid[chIndex])/1e12, const.c/(Fc + paramTx.freqGrid[chIndex])/1e-9))
 
 sigWDM = sigWDM.reshape(len(sigWDM),)
 symbTx = symbTx_[:,:,chIndex].reshape(len(symbTx_),)
 
 # parâmetros do oscilador local:
 FO      = 128e6                 # desvio de frequência
-Δf_lo   = freqGrid[chIndex]+FO  # downshift canal a ser demodulado
-lw      = 100e3                 # largura de linha
+Δf_lo   = paramTx.freqGrid[chIndex]+FO  # downshift canal a ser demodulado
+lw      = 0*100e3                 # largura de linha
 Plo_dBm = 10                    # potência em dBm
 Plo     = 10**(Plo_dBm/10)*1e-3 # potência em W
 ϕ_lo    = 0                     # fase inicial em rad     
@@ -1072,11 +1067,16 @@ ax1.grid()
 sigRx = edc(sigRx, Ltotal, D, Fc-Δf_lo, Fa)
 
 # captura amostras no meio dos intervalos de sinalização
-varVector = np.var((sigRx.T).reshape(-1,param.SpS), axis=0) # acha o melhor instante de amostragem
-sampDelay = np.where(varVector == np.amax(varVector))[0][0]
+# varVector = np.var((sigRx.T).reshape(-1,param.SpS), axis=0) # acha o melhor instante de amostragem
+# sampDelay = np.where(varVector == np.amax(varVector))[0][0]
 
-# downsampling
-sigRx = sigRx[sampDelay::param.SpS]
+# # downsampling
+# sigRx = sigRx[sampDelay::param.SpS]
+
+paramDec = parameters()
+paramDec.SpS_in = SpS
+paramDec.SpS_out = 1
+sigRx = decimate(sigRx.reshape(-1,1), paramDec).reshape(-1,)
 
 discard = 1000
 ind = np.arange(discard, sigRx.size-discard)
@@ -1100,10 +1100,10 @@ sigRx = np.roll(sigRx, symbDelay)
 sigRx = sigRx/np.sqrt(signal_power(sigRx[ind]))
 
 # estima e compensa desvio de frequência entre sinal e LO
-fo = fourthPowerFOE(sigRx, 1/param.Rs)
-print('FO estimado: %3.4f MHz'%(fo/1e6))
+sigRx, FO_est = fourthPowerFOE(sigRx.reshape(-1,1), param.Rs, plotSpec=False)
+print('FO estimado: %3.4f MHz'%(FO_est/1e6))
 
-sigRx = sigRx*np.exp(-1j*2*π*fo*np.arange(0,len(sigRx))/param.Rs)
+# sigRx = sigRx*np.exp(-1j*2*π*fo*np.arange(0,len(sigRx))/param.Rs)
 
 # plota constelação após compensação do desvio de frequência entre sinal e LO
 ax3.plot(sigRx[ind].real, sigRx[ind].imag,'.', markersize=4)
@@ -1112,18 +1112,25 @@ ax3.title.set_text('Após CFR (4th-power FOE)')
 ax3.grid()
 
 # compensa ruído de fase
-windowSize = 40
-c  = mod.constellation/np.sqrt(mod.Es)
-sigRx, ϕ, θ = cpr(sigRx, windowSize, c, symbTx)
+paramCPR = parameters()
+paramCPR.alg = 'ddpll'
+paramCPR.M   = paramTx.M
+paramCPR.constType = 'qam'
+paramCPR.tau1 = 1/(2*np.pi*10e3)
+paramCPR.tau2 = 1/(2*np.pi*10e3)
+paramCPR.Kv  = 0.1
+#paramCPR.pilotInd = np.arange(0, len(sigRx), 25)
 
-# plota saídas do estimador de fase
-phaseOffSet = np.mean(np.roll(ϕ_pn_lo[::param.SpS], symbDelay)-θ)
-plt.figure()
-plt.plot(np.roll(ϕ_pn_lo[::param.SpS], symbDelay), label='ruído de fase do LO');
-plt.plot(θ+phaseOffSet, label='fase estimada pelo algoritmo de CPR');
-plt.grid()
-plt.xlim(0,θ.size)
-plt.legend();
+sigRx, θ = cpr(sigRx, symbTx=symbTx, paramCPR=paramCPR)
+
+# # plota saídas do estimador de fase
+# phaseOffSet = np.mean(np.roll(ϕ_pn_lo[::param.SpS], symbDelay)-θ)
+# plt.figure()
+# plt.plot(np.roll(ϕ_pn_lo[::param.SpS], symbDelay), label='ruído de fase do LO');
+# plt.plot(θ+phaseOffSet, label='fase estimada pelo algoritmo de CPR');
+# plt.grid()
+# plt.xlim(0,θ.size)
+# plt.legend();
 
 # corrige (possível) ambiguidade de fase adicionada ao sinal
 rot = np.mean(symbTx[ind]/sigRx[ind])
@@ -1142,8 +1149,8 @@ ax4.grid()
 SNR = signal_power(symbTx[ind])/signal_power(sigRx[ind]-symbTx[ind])
 
 # Demodulação com aplicação a regra de decisão brusca        
-bitsRx = mod.demodulate(np.sqrt(mod.Es)*sigRx, demod_type = 'hard') 
-bitsTx = mod.demodulate(np.sqrt(mod.Es)*symbTx, demod_type = 'hard') 
+bitsRx = demodulateGray(np.sqrt(mod.Es)*sigRx, M, 'qam') 
+bitsTx = demodulateGray(np.sqrt(mod.Es)*symbTx, M, 'qam') 
 
 err = np.logical_xor(bitsRx[discard:bitsRx.size-discard], 
                      bitsTx[discard:bitsTx.size-discard])
@@ -1158,6 +1165,9 @@ plt.figure()
 plt.plot(err,'o', label = 'erros')
 plt.legend()
 plt.grid()
+# -
+
+symbTx
 
 # +
 plt.figure(figsize=(5,5))
