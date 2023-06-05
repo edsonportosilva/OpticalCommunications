@@ -1011,7 +1011,7 @@ symbTx = symbTx_[:,:,chIndex].reshape(len(symbTx_),)
 # parâmetros do oscilador local:
 FO      = 128e6                 # desvio de frequência
 Δf_lo   = paramTx.freqGrid[chIndex]+FO  # downshift canal a ser demodulado
-lw      = 0*100e3                 # largura de linha
+lw      = 100e3                 # largura de linha
 Plo_dBm = 10                    # potência em dBm
 Plo     = 10**(Plo_dBm/10)*1e-3 # potência em W
 ϕ_lo    = 0                     # fase inicial em rad     
