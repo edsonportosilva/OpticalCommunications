@@ -14,6 +14,14 @@
 #     name: python3
 # ---
 
+# <a href="https://colab.research.google.com/github/edsonportosilva/OpticalCommunications/blob/main/jupyter notebooks/8. Introdução às comunicações ópticas coerentes.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
+if 'google.colab' in str(get_ipython()):    
+    # ! git clone -b main https://github.com/edsonportosilva/OptiCommPy
+    from os import chdir as cd
+    cd('/content/OptiCommPy/')
+    # ! pip install .
+
 # +
 import matplotlib.pyplot as plt
 import numpy as np
@@ -940,7 +948,7 @@ param.Nbits = 60000      # número de bits
 param.pulse = 'rrc'      # formato de pulso
 param.Ntaps = 4096       # número de coeficientes do filtro RRC
 param.alphaRRC = 0.01    # rolloff do filtro RRC
-param.Pch_dBm = -2       # potência média por canal WDM [dBm]
+param.Pch_dBm = 2       # potência média por canal WDM [dBm]
 param.Nch     = 5        # número de canais WDM
 param.Fc      = 193.1e12 # frequência central do espectro WDM
 param.freqSpac = 40e9    # espaçamento em frequência da grade de canais WDM
@@ -960,7 +968,7 @@ Lspan  = 80    # km
 alpha = 0.2    # dB/km
 D = 16         # ps/nm/km
 Fc = 193.1e12  # Hz
-hz = 2         # km
+hz = 1         # km
 gamma = 1.3    # 1/(W.km)
 
 if canalLinear:
@@ -997,7 +1005,7 @@ plt.title('Espectro óptico dos canais WDM');
 ### Receptor
 
 # parâmetros
-chIndex = 2 # índice do canal a ser demodulado
+chIndex = 1 # índice do canal a ser demodulado
 plotPSD = True
 
 Fa = param.SpS*param.Rs
