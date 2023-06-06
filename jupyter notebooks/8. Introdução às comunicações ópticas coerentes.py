@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.14.5
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -20,7 +20,7 @@ import numpy as np
 from sympy import Matrix, zeros
 from numpy.random import normal
 from commpy.utilities  import upsample
-from optic.dsp import firFilter, pulseShape, lowPassFIR
+from optic.dsp import firFilter, pulseShape, lowPassFIR, symbolSync
 from optic.metrics import signal_power
 from optic.plot import eyediagram
 from optic.equalization import edc, mimoAdaptEqualizer
@@ -941,9 +941,10 @@ param.pulse = 'rrc'      # formato de pulso
 param.Ntaps = 4096       # número de coeficientes do filtro RRC
 param.alphaRRC = 0.01    # rolloff do filtro RRC
 param.Pch_dBm = -2       # potência média por canal WDM [dBm]
-param.Nch     = 1        # número de canais WDM
+param.Nch     = 5        # número de canais WDM
 param.Fc      = 193.1e12 # frequência central do espectro WDM
 param.freqSpac = 40e9    # espaçamento em frequência da grade de canais WDM
+param.lw = 100e3         # largura de linha dos lasers
 param.Nmodes = 1         # número de modos de polarização
 
 sigWDM_Tx, symbTx_, paramTx = simpleWDMTx(param)
@@ -996,7 +997,7 @@ plt.title('Espectro óptico dos canais WDM');
 ### Receptor
 
 # parâmetros
-chIndex = 0 # índice do canal a ser demodulado
+chIndex = 2 # índice do canal a ser demodulado
 plotPSD = True
 
 Fa = param.SpS*param.Rs
@@ -1066,23 +1067,19 @@ ax1.grid()
 # compensação dispersão cromática
 sigRx = edc(sigRx, Ltotal, D, Fc-Δf_lo, Fa)
 
-# captura amostras no meio dos intervalos de sinalização
-# varVector = np.var((sigRx.T).reshape(-1,param.SpS), axis=0) # acha o melhor instante de amostragem
-# sampDelay = np.where(varVector == np.amax(varVector))[0][0]
+# captura uma amostra a cada intervalo de sinalização
 
-# # downsampling
-# sigRx = sigRx[sampDelay::param.SpS]
-
+# downsampling
 paramDec = parameters()
 paramDec.SpS_in = SpS
 paramDec.SpS_out = 1
-sigRx = decimate(sigRx.reshape(-1,1), paramDec).reshape(-1,)
+sigRx = decimate(sigRx.reshape(-1,1), paramDec)
 
-discard = 1000
+discard = 2000
 ind = np.arange(discard, sigRx.size-discard)
 
 # normaliza símbolos recebidos
-sigRx = sigRx/np.sqrt(signal_power(sigRx[ind]))
+sigRx = pnorm(sigRx)
 
 # plota constelação após compensação da dispersão cromática
 ax2.plot(sigRx.real, sigRx.imag,'.', markersize=4)
@@ -1091,19 +1088,17 @@ ax2.title.set_text('Após CD comp.')
 ax2.grid()
 
 # calcula atraso gerado pelo walkoff
-symbDelay = np.argmax(signal.correlate(np.abs(symbTx), np.abs(sigRx)))-sigRx.size+1 
+symbDelay = np.argmax(signal.correlate(np.abs(symbTx).reshape(-1,1), np.abs(sigRx)))-sigRx.size+1 
 
 # compensa atraso do walkoff
 sigRx = np.roll(sigRx, symbDelay)
 
 # normaliza constelação recebida
-sigRx = sigRx/np.sqrt(signal_power(sigRx[ind]))
+sigRx = pnorm(sigRx)
 
 # estima e compensa desvio de frequência entre sinal e LO
 sigRx, FO_est = fourthPowerFOE(sigRx.reshape(-1,1), param.Rs, plotSpec=False)
 print('FO estimado: %3.4f MHz'%(FO_est/1e6))
-
-# sigRx = sigRx*np.exp(-1j*2*π*fo*np.arange(0,len(sigRx))/param.Rs)
 
 # plota constelação após compensação do desvio de frequência entre sinal e LO
 ax3.plot(sigRx[ind].real, sigRx[ind].imag,'.', markersize=4)
@@ -1121,23 +1116,22 @@ paramCPR.tau2 = 1/(2*np.pi*10e3)
 paramCPR.Kv  = 0.1
 #paramCPR.pilotInd = np.arange(0, len(sigRx), 25)
 
-sigRx, θ = cpr(sigRx, symbTx=symbTx, paramCPR=paramCPR)
+sigRx, θ = cpr(pnorm(sigRx), symbTx=symbTx, paramCPR=paramCPR)
 
-# # plota saídas do estimador de fase
-# phaseOffSet = np.mean(np.roll(ϕ_pn_lo[::param.SpS], symbDelay)-θ)
-# plt.figure()
-# plt.plot(np.roll(ϕ_pn_lo[::param.SpS], symbDelay), label='ruído de fase do LO');
-# plt.plot(θ+phaseOffSet, label='fase estimada pelo algoritmo de CPR');
-# plt.grid()
-# plt.xlim(0,θ.size)
-# plt.legend();
+# plota saídas do estimador de fase
+plt.figure()
+plt.title('Phase estimada')
+plt.plot(θ,'-')
+plt.xlim(0, len(θ))
+plt.grid();
 
 # corrige (possível) ambiguidade de fase adicionada ao sinal
-rot = np.mean(symbTx[ind]/sigRx[ind])
+symbRx = symbolSync(sigRx, symbTx.reshape(-1,1), 1)
+rot = np.mean(pnorm(symbRx[ind])/sigRx[ind])
 sigRx  = rot*sigRx
 
 # normaliza símbolos recebidos
-sigRx = sigRx/np.sqrt(signal_power(sigRx[ind]))
+sigRx = pnorm(sigRx)
 
 # plota constelação após compensação do ruído de fase
 ax4.plot(sigRx[ind].real, sigRx[ind].imag,'.', markersize=4)
@@ -1146,11 +1140,17 @@ ax4.title.set_text('Após CPR (DD-PLL)')
 ax4.grid()
 
 # estima SNR da constelação recebida
-SNR = signal_power(symbTx[ind])/signal_power(sigRx[ind]-symbTx[ind])
+SNR = signal_power(symbRx[ind])/signal_power(sigRx[ind]-symbRx[ind])
 
-# Demodulação com aplicação a regra de decisão brusca        
-bitsRx = demodulateGray(np.sqrt(mod.Es)*sigRx, M, 'qam') 
-bitsTx = demodulateGray(np.sqrt(mod.Es)*symbTx, M, 'qam') 
+# Demodulação com aplicação a regra de decisão brusca  
+constSymb = GrayMapping(M, 'qam')
+Es = np.mean(np.abs(constSymb) ** 2)
+
+sigRx = sigRx.reshape(-1,)
+symbRx = symbRx.reshape(-1,)
+
+bitsRx = demodulateGray(np.sqrt(Es)*pnorm(sigRx), M, 'qam') 
+bitsTx = demodulateGray(np.sqrt(Es)*pnorm(symbRx), M, 'qam') 
 
 err = np.logical_xor(bitsRx[discard:bitsRx.size-discard], 
                      bitsTx[discard:bitsTx.size-discard])
@@ -1165,136 +1165,52 @@ plt.figure()
 plt.plot(err,'o', label = 'erros')
 plt.legend()
 plt.grid()
-# -
 
-symbTx
 
 # +
-plt.figure(figsize=(5,5))
-plt.ylabel('$S_Q$', fontsize=14)
-plt.xlabel('$S_I$', fontsize=14)
-#plt.xlim(-1.1,1.1)
-#plt.ylim(-1.1,1.1)
-plt.grid()
-
-plt.plot(sigRx[ind].real,sigRx[ind].imag,'.', markersize=4, label='Rx')
-plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx');
-
-# +
-from scipy.stats.kde import gaussian_kde
-
-y = (sigRx[ind]).real
-x = (sigRx[ind]).imag
-
-k = gaussian_kde(np.vstack([x, y]))
-k.set_bandwidth(bw_method=k.factor/4)
-
-xi, yi = 1.1*np.mgrid[x.min():x.max():x.size**0.5*1j,y.min():y.max():y.size**0.5*1j]
-zi = k(np.vstack([xi.flatten(), yi.flatten()]))
-plt.figure(figsize=(5,5))
-plt.pcolormesh(xi, yi, zi.reshape(xi.shape), alpha=1, shading='auto');
-
-
-# -
-
-def dbp(Ein, Fs, Ltotal, Lspan, hz=0.5, alpha=0.2, gamma=1.3, D=16, Fc=193.1e12):      
-    '''
-    Digital backpropagation (symmetric, single-pol.)
+# def dbp(Ein, Fs, Ltotal, Lspan, hz=0.5, alpha=0.2, gamma=1.3, D=16, Fc=193.1e12):      
+#     '''
+#     Digital backpropagation (symmetric, single-pol.)
        
-    '''             
-    c = 299792458   # speed of light (vacuum)
-    c_kms = c/1e3
-    λ  = c_kms/Fc
-    α  = -alpha/(10*np.log10(np.exp(1)))
-    β2 = (D*λ**2)/(2*np.pi*c_kms)
-    γ  = gamma
+#     '''             
+#     c = 299792458   # speed of light (vacuum)
+#     c_kms = c/1e3
+#     λ  = c_kms/Fc
+#     α  = -alpha/(10*np.log10(np.exp(1)))
+#     β2 = (D*λ**2)/(2*np.pi*c_kms)
+#     γ  = gamma
             
-    Nfft = len(Ein)
+#     Nfft = len(Ein)
 
-    ω = 2*np.pi*Fs*fftfreq(Nfft)
+#     ω = 2*np.pi*Fs*fftfreq(Nfft)
     
-    Nspans = int(np.floor(Ltotal/Lspan))
-    Nsteps = int(np.floor(Lspan/hz))   
+#     Nspans = int(np.floor(Ltotal/Lspan))
+#     Nsteps = int(np.floor(Lspan/hz))   
         
-    Ech = Ein.reshape(len(Ein),)    
-    Ech = fft(Ech) #single-polarization field    
+#     Ech = Ein.reshape(len(Ein),)    
+#     Ech = fft(Ech) #single-polarization field    
     
-    linOperator = np.exp(-(α/2)*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
+#     linOperator = np.exp(-(α/2)*(hz/2) + 1j*(β2/2)*(ω**2)*(hz/2))
         
-    for spanN in tqdm(range(0, Nspans)):
+#     for spanN in tqdm(range(0, Nspans)):
         
-        Ech = Ech*np.exp((α/2)*Nsteps*hz)
+#         Ech = Ech*np.exp((α/2)*Nsteps*hz)
                 
-        for stepN in range(0, Nsteps):            
-            # First linear step (frequency domain)
-            Ech = Ech*linOperator            
+#         for stepN in range(0, Nsteps):            
+#             # First linear step (frequency domain)
+#             Ech = Ech*linOperator            
                       
-            # Nonlinear step (time domain)
-            Ech = ifft(Ech)
-            Ech = Ech*np.exp(1j*γ*(Ech*np.conj(Ech))*hz)
+#             # Nonlinear step (time domain)
+#             Ech = ifft(Ech)
+#             Ech = Ech*np.exp(1j*γ*(Ech*np.conj(Ech))*hz)
             
-            # Second linear step (frequency domain)
-            Ech = fft(Ech)       
-            Ech = Ech*linOperator             
+#             # Second linear step (frequency domain)
+#             Ech = fft(Ech)       
+#             Ech = Ech*linOperator             
                 
-    Ech = ifft(Ech) 
+#     Ech = ifft(Ech) 
        
-    return Ech.reshape(len(Ech), 1)
-
-
-# +
-@numba.njit
-def CPR(Ei, N, constSymb, symbTx):    
-    '''
-    Carrier phase recovery (CPR)
-    
-    '''    
-    ϕ  = np.zeros(Ei.shape)    
-    θ  = np.zeros(Ei.shape)
-    
-    for indSymb in range(0,len(Ei)):
-        
-        decided = np.argmin(np.abs(Ei[indSymb]*np.exp(1j*θ[indSymb-1]) - constSymb)) # find closest constellation symbol
-        
-        if indSymb % 50 == 0:
-            ϕ[indSymb] = np.angle(symbTx[indSymb]/(Ei[indSymb])) # phase estimation with pilot symbol
-        else:
-            ϕ[indSymb] = np.angle(constSymb[decided]/(Ei[indSymb])) # phase estimation after symbol decision
-                
-        if indSymb > N:
-            θ[indSymb]  = np.mean(ϕ[indSymb-N:indSymb]) # moving average filter
-        else:           
-            θ[indSymb] = ϕ[indSymb]
-            
-    Eo = Ei*np.exp(1j*θ) # compensate phase rotation
-        
-    return Eo, ϕ, θ
-
-def fourthPowerFOE(Ei, Ts):
-    '''
-    4th power frequency offset estimator (FOE)
-    
-    '''
-    π = np.pi
-    Fs = 1/Ts
-    Nfft = len(Ei)
-    
-    f = Fs*fftfreq(Nfft)
-    f = fftshift(f)
-    
-    f4 = 10*np.log10(np.abs(fftshift(fft(Ei**4))))    
-    indFO = np.argmax(f4)
-    
-    plt.figure()
-    plt.plot(f, f4, label = '$|FFT(s[k]^4)|[dB]$')
-    plt.plot(f[indFO], f4[indFO],'x',label='$4f_o$')
-    plt.legend()
-    plt.xlim(min(f), max(f))
-    plt.grid()
-    
-    return f[indFO]/4
-
-
+#     return Ech.reshape(len(Ech), 1)
 # -
 
 def powerProfile(Pin, alpha, Lspan, Nspans):
