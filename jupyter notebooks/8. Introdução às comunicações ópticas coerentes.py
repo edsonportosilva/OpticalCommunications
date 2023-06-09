@@ -64,6 +64,9 @@ figsize(10, 3)
 import sympy as sp
 from utils import symdisp, symplot
 
+# %load_ext autoreload
+# %autoreload 2
+
 # # Introdução às Comunicações Ópticas Coerentes
 
 # + [markdown] toc=true
@@ -555,6 +558,8 @@ Plo_dBm  = 10   # potência do oscilador local
 
 Plo = 10**(Plo_dBm/10)*1e-3 # potência do oscilador local na entrada do receptor
 
+
+
 ############# Simulação #############
 
 ### Transmissor
@@ -709,6 +714,9 @@ lw       = 0*10e3
 
 Plo = 10**(Plo_dBm/10)*1e-3 # potência do oscilador local na entrada do receptor
 
+
+
+
 ############# Simulação #############
 
 ### Transmissor
@@ -855,86 +863,7 @@ plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx');
 
 # ## Sistemas WDM coerentes
 
-# +
 from optic.tx import simpleWDMTx
-# def simpleWDMTx(param):
-    
-#     # transmitter parameters
-#     Ts  = 1/param.Rs        # symbol period [s]
-#     Fa  = 1/(Ts/param.SpS)  # sampling frequency [samples/s]
-#     Ta  = 1/Fa              # sampling period [s]
-    
-#     # central frequencies of the WDM channels
-#     freqGrid = np.arange(-np.floor(param.Nch/2), np.floor(param.Nch/2)+1,1)*param.freqSpac
-    
-#     if (param.Nch % 2) == 0:
-#         freqGrid += param.freqSpac/2
-        
-#     # IQM parameters
-#     Ai = 1
-#     Vπ = 2
-#     Vb = -Vπ
-#     Pch = 10**(param.Pch_dBm/10)*1e-3   # optical signal power per WDM channel
-        
-#     π = np.pi
-    
-#     t = np.arange(0, int(((param.Nbits)/np.log2(param.M))*param.SpS))
-    
-#     # allocate array 
-#     sigTxWDM  = np.zeros((len(t), param.Nmodes), dtype='complex')
-#     symbTxWDM = np.zeros((int(len(t)/param.SpS), param.Nmodes, param.Nch), dtype='complex')
-    
-#     Psig = 0
-    
-#     for indMode in range(0, param.Nmodes):        
-#         print('Mode #%d'%(indMode))
-        
-#         for indCh in range(0, param.Nch):
-#             # generate random bits
-#             bitsTx   = np.random.randint(2, size=param.Nbits)    
-
-#             # map bits to constellation symbols
-#             mod = QAMModem(m=param.M)
-#             symbTx = mod.modulate(bitsTx)
-#             Es = mod.Es
-
-#             # normalize symbols energy to 1
-#             symbTx = symbTx/np.sqrt(Es)
-            
-#             symbTxWDM[:,indMode,indCh] = symbTx
-            
-#             # upsampling
-#             symbolsUp = upsample(symbTx, param.SpS)
-
-#             # pulse shaping
-#             if param.pulse == 'nrz':
-#                 pulse = pulseShape('nrz', param.SpS)
-#             elif param.pulse == 'rrc':
-#                 pulse = pulseShape('rrc', param.SpS, N=param.Ntaps, alpha=param.alphaRRC, Ts=Ts)
-
-#             pulse = pulse/np.max(np.abs(pulse))
-#             sigTx = firFilter(pulse, symbolsUp)
-
-#             # optical modulation
-#             sigTxCh = iqm(Ai, 0.5*sigTx, Vπ, Vb, Vb)
-#             sigTxCh = np.sqrt(Pch/param.Nmodes)*sigTxCh/np.sqrt(signal_power(sigTxCh))
-            
-#             print('channel %d power : %.2f dBm, fc : %3.4f THz' 
-#                   %(indCh+1, 10*np.log10(signal_power(sigTxCh)/1e-3), 
-#                     (param.Fc+freqGrid[indCh])/1e12))
-
-#             sigTxWDM[:,indMode] += sigTxCh*np.exp(1j*2*π*(freqGrid[indCh]/Fa)*t)
-            
-#         Psig += signal_power(sigTxWDM[:,indMode])
-        
-#     print('total WDM signal power: %.2f dBm'%(10*np.log10(Psig/1e-3)))
-    
-#     return sigTxWDM, symbTxWDM, freqGrid
-
-# +
-# class parameters:
-#     pass
-# -
 
 # **Geração de sinal WDM**
 
@@ -944,11 +873,11 @@ param = parameters()
 param.M   = 16           # ordem do formato de modulação
 param.Rs  = 32e9         # taxa de sinalização [baud]
 param.SpS = 16           # número de amostras por símbolo
-param.Nbits = 60000      # número de bits
+param.Nbits = 80000      # número de bits
 param.pulse = 'rrc'      # formato de pulso
 param.Ntaps = 4096       # número de coeficientes do filtro RRC
 param.alphaRRC = 0.01    # rolloff do filtro RRC
-param.Pch_dBm = 2       # potência média por canal WDM [dBm]
+param.Pch_dBm = -4       # potência média por canal WDM [dBm]
 param.Nch     = 5        # número de canais WDM
 param.Fc      = 193.1e12 # frequência central do espectro WDM
 param.freqSpac = 40e9    # espaçamento em frequência da grade de canais WDM
@@ -1017,6 +946,8 @@ print('Demodulando canal #%d , fc: %.4f THz, λ: %.4f nm'\
 sigWDM = sigWDM.reshape(len(sigWDM),)
 symbTx = symbTx_[:,:,chIndex].reshape(len(symbTx_),)
 
+
+
 # parâmetros do oscilador local:
 FO      = 128e6                 # desvio de frequência
 Δf_lo   = paramTx.freqGrid[chIndex]+FO  # downshift canal a ser demodulado
@@ -1036,6 +967,9 @@ sigLO   = np.sqrt(Plo)*np.exp(1j*(2*π*Δf_lo*t + ϕ_lo + ϕ_pn_lo))
 
 # receptor óptico coerente
 sigRx = coherentReceiver(sigWDM, sigLO)
+
+
+
 
 # filtragem Rx
 
@@ -1071,7 +1005,9 @@ ax1.grid()
 # sigRx = dbp(np.sqrt(Pin)*sigRx, Fa, Ltotal, Lspan, hzDBP, alpha, -gamma, D, Fc)
 # sigRx = sigRx.reshape(len(sigRx),)
 # sigRx = firFilter(pulse, sigRx)
-    
+
+
+
 # compensação dispersão cromática
 sigRx = edc(sigRx, Ltotal, D, Fc-Δf_lo, Fa)
 
@@ -1124,7 +1060,7 @@ paramCPR.tau2 = 1/(2*np.pi*10e3)
 paramCPR.Kv  = 0.1
 #paramCPR.pilotInd = np.arange(0, len(sigRx), 25)
 
-sigRx, θ = cpr(pnorm(sigRx), symbTx=symbTx, paramCPR=paramCPR)
+sigRx, θ = cpr(sigRx, symbTx=symbTx.reshape(-1,1), paramCPR=paramCPR)
 
 # plota saídas do estimador de fase
 plt.figure()
