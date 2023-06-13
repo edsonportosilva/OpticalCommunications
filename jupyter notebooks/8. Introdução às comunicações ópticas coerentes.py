@@ -654,7 +654,7 @@ plt.figure()
 plt.plot(err,'o', label = 'erros')
 plt.legend()
 plt.grid()
-# +
+# + hide_input=true
 plt.figure(figsize=(4,4))
 plt.axis('square')
 plt.ylabel('$S_Q$', fontsize=14)
@@ -668,7 +668,7 @@ plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx')
 plt.legend();
 # -
 
-pconst(sigRx)
+pconst(sigRx, R=2);
 
 # ### Exemplo: simulação com formatos QPSK, QAM
 #
@@ -714,8 +714,6 @@ Plo_dBm  = 10    # potência do oscilador local
 lw       = 0*10e3
 
 Plo = 10**(Plo_dBm/10)*1e-3 # potência do oscilador local na entrada do receptor
-
-
 
 
 ############# Simulação #############
@@ -768,7 +766,7 @@ if plotPSD:
 sigRxo = linFiberCh(sigTxo, Ltotal, alpha, D, Fc, Fa)
 
 ### Recepcão coerente
-Pin = (np.abs(sigTxo)**2).mean() # Potência óptica média média recebida
+Pin = signal_power(sigTxo) # Potência óptica média média recebida
 
 # oscilador local
 t      = np.arange(0, sigRxo.size)*Ta
@@ -857,6 +855,8 @@ plt.grid()
 plt.plot(sigRx[ind].real,sigRx[ind].imag,'.', markersize=4, label='Rx')
 plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx');
 # -
+
+pconst(sigRx[ind],R=1.5);
 
 # ## Multiplexação de polarização
 #
@@ -968,8 +968,6 @@ sigLO   = np.sqrt(Plo)*np.exp(1j*(2*π*Δf_lo*t + ϕ_lo + ϕ_pn_lo))
 
 # receptor óptico coerente
 sigRx = coherentReceiver(sigWDM, sigLO)
-
-
 
 
 # filtragem Rx
