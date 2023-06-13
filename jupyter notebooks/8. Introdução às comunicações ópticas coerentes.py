@@ -672,7 +672,6 @@ pconst(sigRx, R=2);
 
 # ### Exemplo: simulação com formatos QPSK, QAM
 #
-# **Modulador óptico IQ**
 
 from optic.modulation import modulateGray, demodulateGray, GrayMapping
 from optic.dsp import pnorm, decimate
