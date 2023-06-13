@@ -30,7 +30,7 @@ from numpy.random import normal
 from commpy.utilities  import upsample
 from optic.dsp import firFilter, pulseShape, lowPassFIR, symbolSync
 from optic.metrics import signal_power
-from optic.plot import eyediagram
+from optic.plot import eyediagram, pconst
 from optic.equalization import edc, mimoAdaptEqualizer
 from optic.carrierRecovery import cpr, fourthPowerFOE
 from optic.models import mzm, linFiberCh, iqm, ssfm, edfa, phaseNoise, coherentReceiver
@@ -559,18 +559,17 @@ Plo_dBm  = 10   # potência do oscilador local
 Plo = 10**(Plo_dBm/10)*1e-3 # potência do oscilador local na entrada do receptor
 
 
-
 ############# Simulação #############
 
 ### Transmissor
 
 # gera sequência de bits pseudo-aleatórios
-bitsTx   = np.random.randint(2, size=20000)    
-n        = np.arange(0, bitsTx.size)
+bitsTx = np.random.randint(2, size=100000)    
+n      = np.arange(0, bitsTx.size)
 
 # mapeia bits para pulsos elétricos
 symbTx = 2*bitsTx-1
-symbTx = symbTx/np.sqrt(signal_power(symbTx))
+symbTx = pnorm(symbTx)
 
 # upsampling
 symbolsUp = upsample(symbTx, SpS)
@@ -593,7 +592,7 @@ ruido = normal(0, np.sqrt(Fa*(σASE/(2*B))), sigTxo_.size) + 1j*normal(0, np.sqr
 sigTxo = sigTxo_ + ruido
 
 ### Recepcão coerente
-Pin = (np.abs(sigTxo)**2).mean() # Potência óptica média média recebida
+Pin = signal_power(sigTxo) # Potência óptica média média recebida
 
 # oscilador local
 t     = np.arange(0, sigTxo.size)*Ta
@@ -601,7 +600,7 @@ sigLO = np.sqrt(Plo)*np.exp(1j*(2*π*Δf_lo*t + ϕ_lo))
 
 # receptor coerente
 sigRx = coherentReceiver(sigTxo, sigLO)
-sigRx = sigRx/np.std(sigRx)
+sigRx = pnorm(sigRx)
 
 # filtragem Rx
 N = 8001
@@ -618,13 +617,13 @@ OSNR = signal_power(sigTxo_Rx)/signal_power(ruido_Rx)
 Nsamples = 10000
 
 sigEye = sigRx.copy()
-eyediagram(sigTx,  Nsamples, SpS, plotlabel = 'Tx')
-eyediagram(sigEye[int(h.size/SpS)::], Nsamples, SpS, plotlabel = 'Coh-Rx')
-eyediagram(np.abs(sigTxo_DDRx)**2, Nsamples, SpS, plotlabel = 'DD-Rx')
+eyediagram(sigTx,  len(sigTx), SpS, plotlabel = 'Tx', ptype='fancy')
+eyediagram(sigEye[int(h.size/SpS)::], len(sigTx), SpS, plotlabel = 'Coh-Rx', ptype='fancy')
+eyediagram(np.abs(sigTxo_DDRx)**2,len(sigTxo_DDRx), SpS, plotlabel = 'DD-Rx', ptype='fancy')
 
 # captura amostras no meio dos intervalos de sinalização
 sigRx = sigRx[0::SpS]
-sigRx = sigRx/np.sqrt(signal_power(sigRx))
+sigRx = pnorm(sigRx)
 
 if modulation == 'OOK':
     symbTx = (symbTx+1)/np.sqrt(signal_power(symbTx+1))
@@ -668,6 +667,8 @@ plt.plot(sigRx[ind].real,sigRx[ind].imag,'.', markersize=4, label='Rx')
 plt.plot(symbTx[ind].real,symbTx[ind].imag,'k.', markersize=4, label='Tx')
 plt.legend();
 # -
+
+pconst(sigRx)
 
 # ### Exemplo: simulação com formatos QPSK, QAM
 #
