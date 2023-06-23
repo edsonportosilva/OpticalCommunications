@@ -28,7 +28,7 @@ import numpy as np
 from sympy import Matrix, zeros
 from numpy.random import normal
 from commpy.utilities  import upsample
-from optic.dsp import firFilter, pulseShape, lowPassFIR, symbolSync
+from optic.dsp import firFilter, pulseShape, lowPassFIR, symbolSync, pnorm
 from optic.metrics import signal_power
 from optic.plot import eyediagram, pconst
 from optic.equalization import edc, mimoAdaptEqualizer
@@ -872,16 +872,16 @@ from optic.tx import simpleWDMTx
 param = parameters()
 param.M   = 16           # ordem do formato de modulação
 param.Rs  = 32e9         # taxa de sinalização [baud]
-param.SpS = 16           # número de amostras por símbolo
-param.Nbits = 80000      # número de bits
+param.SpS = 8           # número de amostras por símbolo
+param.Nbits = 400000     # número de bits
 param.pulse = 'rrc'      # formato de pulso
 param.Ntaps = 4096       # número de coeficientes do filtro RRC
 param.alphaRRC = 0.01    # rolloff do filtro RRC
-param.Pch_dBm = -4       # potência média por canal WDM [dBm]
+param.Pch_dBm = 0        # potência média por canal WDM [dBm]
 param.Nch     = 5        # número de canais WDM
 param.Fc      = 193.1e12 # frequência central do espectro WDM
 param.freqSpac = 40e9    # espaçamento em frequência da grade de canais WDM
-param.lw = 100e3         # largura de linha dos lasers
+param.lw = 0*100e3         # largura de linha dos lasers
 param.Nmodes = 1         # número de modos de polarização
 
 sigWDM_Tx, symbTx_, paramTx = simpleWDMTx(param)
@@ -895,7 +895,7 @@ canalLinear = False
 Ltotal = 800   # km
 Lspan  = 80    # km
 alpha = 0.2    # dB/km
-D = 16         # ps/nm/km
+D = 8          # ps/nm/km
 Fc = 193.1e12  # Hz
 hz = 1         # km
 gamma = 1.3    # 1/(W.km)
@@ -931,10 +931,16 @@ plt.title('Espectro óptico dos canais WDM');
 # **Recepção dos canais WDM**
 
 # +
+from optic.plot import constHist
+
+radius = 1.5
+cmap = 'turbo'
+whiteb = 'False'
+
 ### Receptor
 
 # parâmetros
-chIndex = 1 # índice do canal a ser demodulado
+chIndex = 2 # índice do canal a ser demodulado
 plotPSD = True
 
 Fa = param.SpS*param.Rs
@@ -951,7 +957,7 @@ symbTx = symbTx_[:,:,chIndex].reshape(len(symbTx_),)
 # parâmetros do oscilador local:
 FO      = 128e6                 # desvio de frequência
 Δf_lo   = paramTx.freqGrid[chIndex]+FO  # downshift canal a ser demodulado
-lw      = 100e3                 # largura de linha
+lw      = 0*100e3                 # largura de linha
 Plo_dBm = 10                    # potência em dBm
 Plo     = 10**(Plo_dBm/10)*1e-3 # potência em W
 ϕ_lo    = 0                     # fase inicial em rad     
@@ -988,13 +994,17 @@ if plotPSD:
     plt.legend(loc='upper left');
     plt.xlim(-Fa/2,Fa/2);
 
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4,figsize=(15,4.5))
-fig.suptitle('Sequência de processamentos no domínio digital')
 
-ax1.plot(sigRx.real, sigRx.imag,'.', markersize=4)
-ax1.axis('square')
-ax1.title.set_text('Saída do front-end coerente')
-ax1.grid()
+fig = plt.figure(figsize=(15,4.5))
+fig.suptitle('Sequência de processamentos no domínio digital')
+ax = fig.add_subplot(1, 4, 1, projection='scatter_density')
+ax = constHist(pnorm(sigRx), ax, radius, cmap, whiteb)
+ax.title.set_text('Saída do front-end coerente')
+ax.set_aspect('equal', 'box')
+ax.set_xlim(-2*radius, 2*radius)
+ax.set_ylim(-2*radius, 2*radius)
+ax.set_xlabel("In-Phase (I)")
+ax.set_ylabel("Quadrature (Q)")
 
 # digital backpropagation
 # hzDBP = 5
@@ -1013,7 +1023,7 @@ sigRx = edc(sigRx, Ltotal, D, Fc-Δf_lo, Fa)
 
 # downsampling
 paramDec = parameters()
-paramDec.SpS_in = SpS
+paramDec.SpS_in = param.SpS
 paramDec.SpS_out = 1
 sigRx = decimate(sigRx.reshape(-1,1), paramDec)
 
@@ -1024,10 +1034,14 @@ ind = np.arange(discard, sigRx.size-discard)
 sigRx = pnorm(sigRx)
 
 # plota constelação após compensação da dispersão cromática
-ax2.plot(sigRx.real, sigRx.imag,'.', markersize=4)
-ax2.axis('square')
-ax2.title.set_text('Após CD comp.')
-ax2.grid()
+ax = fig.add_subplot(1, 4, 2, projection='scatter_density')
+ax = constHist(sigRx[ind], ax, radius, cmap, whiteb)
+ax.title.set_text('Após CD comp.')
+ax.set_aspect('equal', 'box')
+ax.set_xlim(-radius, radius)
+ax.set_ylim(-radius, radius)
+ax.set_xlabel("In-Phase (I)")
+#ax.set_ylabel("Quadrature (Q)")
 
 # calcula atraso gerado pelo walkoff
 symbDelay = np.argmax(signal.correlate(np.abs(symbTx).reshape(-1,1), np.abs(sigRx)))-sigRx.size+1 
@@ -1043,10 +1057,14 @@ sigRx, FO_est = fourthPowerFOE(sigRx.reshape(-1,1), param.Rs, plotSpec=False)
 print('FO estimado: %3.4f MHz'%(FO_est/1e6))
 
 # plota constelação após compensação do desvio de frequência entre sinal e LO
-ax3.plot(sigRx[ind].real, sigRx[ind].imag,'.', markersize=4)
-ax3.axis('square')
-ax3.title.set_text('Após CFR (4th-power FOE)')
-ax3.grid()
+ax = fig.add_subplot(1, 4, 3, projection='scatter_density')
+ax = constHist(sigRx[ind], ax, radius, cmap, whiteb)
+ax.title.set_text('Após CFR (4th-power FOE)')
+ax.set_aspect('equal', 'box')
+ax.set_xlim(-radius, radius)
+ax.set_ylim(-radius, radius)
+ax.set_xlabel("In-Phase (I)")
+#ax.set_ylabel("Quadrature (Q)")
 
 # compensa ruído de fase
 paramCPR = parameters()
@@ -1076,10 +1094,16 @@ sigRx  = rot*sigRx
 sigRx = pnorm(sigRx)
 
 # plota constelação após compensação do ruído de fase
-ax4.plot(sigRx[ind].real, sigRx[ind].imag,'.', markersize=4)
-ax4.axis('square')
-ax4.title.set_text('Após CPR (DD-PLL)')
-ax4.grid()
+ax = fig.add_subplot(1, 4, 4, projection='scatter_density')
+ax = constHist(sigRx[ind], ax, radius, cmap, whiteb)
+ax.set_aspect('equal', 'box')
+ax.title.set_text('Após CPR (DD-PLL)')
+ax.set_xlim(-radius, radius)
+ax.set_ylim(-radius, radius)
+ax.set_xlabel("In-Phase (I)")
+#ax.set_ylabel("Quadrature (Q)")
+
+#fig.tight_layout()
 
 # estima SNR da constelação recebida
 SNR = signal_power(symbRx[ind])/signal_power(sigRx[ind]-symbRx[ind])
