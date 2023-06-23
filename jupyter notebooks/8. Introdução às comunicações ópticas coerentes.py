@@ -877,7 +877,7 @@ param.Nbits = 400000     # número de bits
 param.pulse = 'rrc'      # formato de pulso
 param.Ntaps = 4096       # número de coeficientes do filtro RRC
 param.alphaRRC = 0.01    # rolloff do filtro RRC
-param.Pch_dBm = 0        # potência média por canal WDM [dBm]
+param.Pch_dBm = 10        # potência média por canal WDM [dBm]
 param.Nch     = 5        # número de canais WDM
 param.Fc      = 193.1e12 # frequência central do espectro WDM
 param.freqSpac = 40e9    # espaçamento em frequência da grade de canais WDM
@@ -889,19 +889,22 @@ sigWDM_Tx, symbTx_, paramTx = simpleWDMTx(param)
 # **Transmissão via fibra SMF (split-step Fourier)**
 
 # +
-canalLinear = False
+canalLinear = True
 
 # parâmetros do canal óptico
 Ltotal = 800   # km
 Lspan  = 80    # km
 alpha = 0.2    # dB/km
-D = 8          # ps/nm/km
+D = 16          # ps/nm/km
 Fc = 193.1e12  # Hz
 hz = 1         # km
 gamma = 1.3    # 1/(W.km)
 
+sigWDM = sigWDM_Tx.copy()
 if canalLinear:
-    sigWDM = linFiberCh(sigWDM_Tx, Ltotal, alpha, D, Fc, param.Rs*param.SpS)
+    for _ in range(Ltotal//Lspan):       
+        sigWDM = linFiberCh(sigWDM, Lspan, alpha, D, Fc, param.Rs*param.SpS)
+        sigWDM = edfa(sigWDM, param.Rs*param.SpS, Lspan*alpha, 4.5, Fc=param.Fc)
 else:
     #powerProfile(param.Pch_dBm, alpha, Lspan, Ltotal/Lspan)
     paramCh = parameters()
@@ -1013,7 +1016,6 @@ ax.set_ylabel("Quadrature (Q)")
 # sigRx = dbp(np.sqrt(Pin)*sigRx, Fa, Ltotal, Lspan, hzDBP, alpha, -gamma, D, Fc)
 # sigRx = sigRx.reshape(len(sigRx),)
 # sigRx = firFilter(pulse, sigRx)
-
 
 
 # compensação dispersão cromática
