@@ -1,3 +1,4 @@
 
 /jupyter notebooks/__pycache__
 /jupyter notebooks/.ipynb_checkpoints
+*.pyc
