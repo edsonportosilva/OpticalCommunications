@@ -56,6 +56,7 @@ The following Python packages are required (see [`requirements.txt`](./requireme
 | `sympy` | Symbolic mathematics and equation display |
 | `pandas` | Data manipulation and analysis |
 | `scikit-commpy` | Digital communications utilities |
+| `opticommpy` | Optical communications simulation toolkit (transmitters, receivers, fiber, DSP) |
 | `tqdm` | Progress bars for simulations |
 | `numba` | JIT compilation for performance-critical code |
 
