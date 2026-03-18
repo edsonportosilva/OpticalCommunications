@@ -2,7 +2,6 @@
 
 Simulation code and educational notebooks to support the lectures of the **Optical Communications** course at the Electrical Engineering Department of the Federal University of Campina Grande (UFCG).
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/edsonportosilva/OpticalCommunications/HEAD?urlpath=lab)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -12,15 +11,27 @@ Simulation code and educational notebooks to support the lectures of the **Optic
 
 This repository provides interactive Jupyter notebooks that combine theory, mathematical derivations, and Python simulations for studying optical communication systems. The material covers topics from basic optical transmitters and receivers through to advanced coherent systems and digital signal processing (DSP) techniques.
 
-The notebooks are available in **English** and **Portuguese** and are designed to be explored interactively — either directly in the cloud via Binder (no local installation required) or in a local Python environment.
+The notebooks are available in **English** and **Portuguese** and are designed to be explored interactively — either directly in the cloud via Google Colab (no local installation required) or in a local Python environment.
 
 ---
 
 ## How to Use
 
-### ▶ Run in the Cloud (recommended)
+### ▶ Run in Google Colab (recommended)
 
-Click the **Binder** badge above to launch a fully interactive JupyterLab environment in your browser — no installation needed.
+Each notebook has a **Open in Colab** badge at the top. Click it to open and run the notebook instantly in your browser — no local installation needed.
+
+When a notebook is opened in Colab, the first code cell automatically clones and installs **OptiCommPy**:
+
+```python
+if 'google.colab' in str(get_ipython()):    
+    ! git clone -b main https://github.com/edsonportosilva/OptiCommPy
+    from os import chdir as cd
+    cd('/content/OptiCommPy/')
+    ! pip install .
+```
+
+Simply run all cells from top to bottom after opening in Colab.
 
 ### 💻 Run Locally
 
