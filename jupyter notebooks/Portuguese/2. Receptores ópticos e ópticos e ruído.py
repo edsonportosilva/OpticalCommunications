@@ -193,7 +193,7 @@ plt.psd(Is, Fs=fa, label='densidade espectral do ruído de disparo',\
                    linewidth=1,  sides='twosided', NFFT=1024); # estima densidade espectral de potência do sinal
 plt.legend()
 
-display(Math('S_{i_s}(f) = %.2f \;\mathrm{dBW/Hz}'%(10*np.log10(σ2_s/(2*B)))))
+display(Math('S_{i_s}(f) = %.2f \\;\\mathrm{dBW/Hz}'%(10*np.log10(σ2_s/(2*B)))))
 # -
 
 # #### Calculando a potência de um sinal
@@ -280,7 +280,7 @@ plt.ylim(-230, -180)
 plt.psd(It, Fs=fa, label='densidade espectral do ruído térmico',linewidth=1,  sides='twosided', NFFT=1024); # estima densidade espectral do sinal
 plt.legend()
 
-display(Math('S_{i_T}(f) = %.2f \;\mathrm{dBW/Hz}'%(10*np.log10(σ2_T/(2*B)))))
+display(Math('S_{i_T}(f) = %.2f \\;\\mathrm{dBW/Hz}'%(10*np.log10(σ2_T/(2*B)))))
 
 # +
 Pn = signal_power(It)
@@ -836,7 +836,7 @@ plt.figure(figsize=(7,5))
 plt.plot(QdB, np.log10(Pb),label='Pb')
 plt.title('Pb vs Q - OOK')
 plt.xlabel('Q [dB]')
-plt.ylabel('$\log_{10}(P_b)$');
+plt.ylabel('$\\log_{10}(P_b)$');
 plt.xlim(min(QdB),max(QdB))
 plt.grid()
 # -

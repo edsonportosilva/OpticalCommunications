@@ -15,7 +15,7 @@ def symdisp(expr, var, unit=" "):
     :param var: sympy variable, function, expression.
     :param unit: string indicating unit of var [string]
     """
-    display(Math(expr + sp.latex(var) + "\;" + unit))
+    display(Math(expr + sp.latex(var) + "\\;" + unit))
 
 
 # função para arredondamento de floats em expressões simbólicas
