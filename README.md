@@ -80,16 +80,16 @@ OpticalCommunications/
 ├── requirements.txt                  # Python dependencies
 ├── jupyter notebooks/
 │   ├── English/                      # Notebooks in English
-│   │   ├── 0. Optical transmitters.ipynb
-│   │   ├── 1-Optical transmitters.ipynb
-│   │   ├── 2. Optical receivers and noise.ipynb
-│   │   ├── 3. Optical fiber.ipynb
-│   │   ├── 4. Optical fiber_dispersion.ipynb
-│   │   ├── 5. Optical fiber - dispersion and loss.ipynb
-│   │   ├── 6. Optical fiber - SSFM.ipynb
-│   │   ├── 7. Optical amplification.ipynb
-│   │   ├── 8. Introduction to coherent optical communications.ipynb
-│   │   ├── 9. Equalization in coherent optical systems.ipynb
+│   │   ├── 0 - Optical transmitters.ipynb
+│   │   ├── 1 - Optical transmitters.ipynb
+│   │   ├── 2 - Optical receivers and noise.ipynb
+│   │   ├── 3 - Optical fiber.ipynb
+│   │   ├── 4 - Optical fiber_dispersion.ipynb
+│   │   ├── 5 - Optical fiber - dispersion and loss.ipynb
+│   │   ├── 6 - Optical fiber - SSFM.ipynb
+│   │   ├── 7 - Optical amplification.ipynb
+│   │   ├── 8 - Introduction to coherent optical communications.ipynb
+│   │   ├── 9 - Equalization in coherent optical systems.ipynb
 │   │   ├── Coherent WDM systems.ipynb
 │   │   ├── MZM.ipynb
 │   │   ├── Split-Step Fourier Method (SSFM).ipynb
