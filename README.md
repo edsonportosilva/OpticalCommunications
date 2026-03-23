@@ -2,7 +2,7 @@
 
 Simulation code and educational notebooks to support the lectures of the **Optical Communications** course at the Electrical Engineering Department of the Federal University of Campina Grande (UFCG).
 
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ---
